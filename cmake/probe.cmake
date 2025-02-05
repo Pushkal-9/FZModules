@@ -1,0 +1,21 @@
+# Print out some information about the build environment
+message("[FZModules::info] $\{CMAKE_VERSION\}: " ${CMAKE_VERSION})
+message("[FZModules::info] $\{CMAKE_C_STANDARD\}$: " ${CMAKE_C_STANDARD})
+message("[FZModules::info] $\{CMAKE_C_COMPILER\}$: " ${CMAKE_C_COMPILER})
+message("[FZModules::info] $\{CMAKE_C_COMPILER_ID\}$: " ${CMAKE_C_COMPILER_ID})
+message("[FZModules::info] $\{CMAKE_C_COMPILER_VERSION\}$: " ${CMAKE_C_COMPILER_VERSION})
+message("[FZModules::info] $\{CMAKE_CXX_STANDARD\}$: " ${CMAKE_CXX_STANDARD})
+message("[FZModules::info] $\{CMAKE_CXX_COMPILER\}$: " ${CMAKE_CXX_COMPILER})
+message("[FZModules::info] $\{CMAKE_CXX_COMPILER_ID\}$: " ${CMAKE_CXX_COMPILER_ID})
+message("[FZModules::info] $\{CMAKE_CXX_COMPILER_VERSION\}$: " ${CMAKE_CXX_COMPILER_VERSION})
+
+if(PSZ_BACKEND STREQUAL "CUDA" OR PSZ_BACKEND STREQUAL "cuda")
+  message("[FZModules::info] $\{CMAKE_CUDA_STANDARD\}: " ${CMAKE_CUDA_STANDARD})
+  message("[FZModules::info] $\{CMAKE_CUDA_COMPILER\}: " ${CMAKE_CUDA_COMPILER})
+  message("[FZModules::info] $\{CMAKE_CUDA_COMPILER_ID\}: " ${CMAKE_CUDA_COMPILER_ID})
+  message("[FZModules::info] $\{CMAKE_CUDA_COMPILER_VERSION\}: " ${CMAKE_CUDA_COMPILER_VERSION})
+  message("[FZModules::info] $\{CMAKE_CUDA_ARCHITECTURES\}: " ${CMAKE_CUDA_ARCHITECTURES})
+else()
+  message(FATAL_ERROR "Unsupported PSZ_BACKEND selected: ${PSZ_BACKEND}")
+endif()
+
