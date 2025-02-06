@@ -145,7 +145,7 @@ add_library(FZMOD::spline ALIAS fzmod_cu_spline)
 
 # combine all modules into a single library
 add_library(cusz
-  # TODO: API HERE
+  pipeline/src/driver.cc
 )
 target_link_libraries(fzmod
   PUBLIC
