@@ -9,10 +9,6 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-/* 
-  File for defining portable types and enums
-*/
-
 // enum for device type
 typedef enum { CPU, NVGPU, AMDGPU, INTELGPU } _portable_device;
 // enum for runtime type

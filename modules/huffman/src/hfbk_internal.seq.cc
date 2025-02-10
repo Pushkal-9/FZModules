@@ -14,7 +14,7 @@
 #include "busyheader.hh"
 #include "hfbk_impl.hh"
 #include "hfword.hh"
-#include "log/dbg.hh"
+#include "utils/dbg.hh"
 #include "utils/timer.hh"
 
 // internal data structure

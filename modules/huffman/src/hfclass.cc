@@ -19,7 +19,7 @@
 // deps
 #include <cuda.h>
 // definitions
-#include "detail/hfclass.cuhip.inl"
+#include "hfclass.cuhip.inl"
 
 template class phf::HuffmanCodec<u1>;
 template class phf::HuffmanCodec<u2>;

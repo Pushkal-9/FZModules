@@ -2,8 +2,9 @@
 #define D3F59CBB_1CC2_441A_8ACD_E598BDD68687
 
 #include <cstddef>
+#include <numeric>
 
-#include "detail/hfcodec.cuhip.inl"
+#include "hfcodec.cuhip.inl"
 #include "hfcxx_module.hh"
 #include "utils/err.hh"
 #include "utils/timer.hh"

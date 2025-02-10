@@ -3,7 +3,6 @@
 
 // Jiannan Tian
 // (created) 2020-04-27 (update) 2020-09-20...2024-12-22
-// logging utilities for portable
 
 #include <iostream>
 #include <sstream>
@@ -18,7 +17,6 @@ namespace _portable::utils {
 #define LOG_DBG " dbg  "
 #define LOG_EXCEPTION "  !!  "
 
-// code for variadic template logging to std::cout
 // https://stackoverflow.com/a/26080768/8740097  CC BY-SA 3.0
 template <typename T>
 void build(std::ostream& o, T t)

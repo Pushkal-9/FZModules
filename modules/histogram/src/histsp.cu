@@ -94,7 +94,7 @@ int GPU_histogram_Cauchy(E* in_data, size_t const data_len, FREQ* out_hist,
   constexpr auto num_workers = 256;  // n SIMD-32
   auto num_chunks = (data_len - 1) / chunk + 1;
 
-  psz::KERNEL_CUHIP_histogram_sparse_multiwarp<E, FREQ>
+  fz::KERNEL_CUHIP_histogram_sparse_multiwarp<E, FREQ>
       <<<num_chunks, num_workers, sizeof(FREQ) * hist_len,
          (GPU_BACKEND_SPECIFIC_STREAM)stream>>>(in_data, data_len, out_hist,
                                                 hist_len, chunk, hist_len / 2);

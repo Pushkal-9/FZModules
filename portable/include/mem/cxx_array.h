@@ -1,7 +1,7 @@
 #ifndef A851557F_29B7_4865_AC4A_B5B59930E5F6
 #define A851557F_29B7_4865_AC4A_B5B59930E5F6
 
-#include "psz/type.h"
+#include "type.h"
 
 namespace _portable {
 

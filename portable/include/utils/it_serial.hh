@@ -4,8 +4,8 @@
 #define SETUP_ND_CPU_SERIAL                                                   \
                                                                               \
   /* fake thread-block setup */                                               \
-  psz_dim3 b, t;                /* (fake) threadblock-related indices */      \
-  psz_dim3 grid_dim, block_dim; /* threadblock-related dimensions */          \
+  fzmod_dim3 b, t;                /* (fake) threadblock-related indices */      \
+  fzmod_dim3 grid_dim, block_dim; /* threadblock-related dimensions */          \
                                                                               \
   /* threadblock-related strides */                                           \
   auto TWy = [&]() { return block_dim.x; };                                   \

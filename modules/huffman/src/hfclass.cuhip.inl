@@ -16,9 +16,8 @@
 #include <limits>
 
 #include "hist.hh"
+#include "typing.hh"
 #include "utils/timer.hh"
-#include "type.h"
-
 
 #define MIN(a, b) ((a) < (b)) ? (a) : (b)
 const static unsigned int WARP_SIZE = 32;
@@ -154,21 +153,4 @@ int GPU_histogram_generic(T* in_data, size_t const data_len, uint32_t* out_hist,
   return FZMOD_SUCCESS;
 }
 
-}  // namespace fz::module
-
-
-#define INIT_HIST_CUDA(E)                                                                  \
-  template void fz::module::GPU_histogram_generic_optimizer_on_initialization<E>(         \
-      size_t const data_len, uint16_t const hist_len, int& grid_dim, int& block_dim,       \
-      int& shmem_use, int& r_per_block);                                                   \
-  template int fz::module::GPU_histogram_generic<E>(                                      \
-      E * in_data, size_t const data_len, uint32_t* out_hist, uint16_t const hist_len,     \
-      int const grid_dim, int const block_dim, int const shmem_use, int const r_per_block, \
-      void* stream);
-
-INIT_HIST_CUDA(u1);
-INIT_HIST_CUDA(u2);
-INIT_HIST_CUDA(u4);
-// INIT_HIST_CUDA(f4);
-
-#undef INIT_HIST_CUDA
+}  // namespace psz::module

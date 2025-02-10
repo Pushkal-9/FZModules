@@ -6,7 +6,7 @@
 
 using stdlen3 = std::array<size_t, 3>;
 
-namespace psz::module {
+namespace fz::module {
 
 template <typename T, typename E, typename FP = T>
 int GPU_predict_spline(T* in_data, stdlen3 const data_len3,       //
@@ -21,4 +21,4 @@ int GPU_reverse_predict_spline(E* in_ectrl, stdlen3 const ectrl_len3,    //
                                T* out_xdata, stdlen3 const xdata_len3,   //
                                double eb, uint32_t radius, void* stream);
 
-};  // namespace psz::module
+};  // namespace fz::module

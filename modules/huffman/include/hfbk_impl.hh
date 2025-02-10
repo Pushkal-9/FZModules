@@ -12,7 +12,7 @@
 #ifndef CD5DD212_2C45_4A8C_BDAD_7186A89BB353
 #define CD5DD212_2C45_4A8C_BDAD_7186A89BB353
 
-#include "cusz/type.h"
+#include "type.h"
 #include "hfword.hh"
 
 // for impl1

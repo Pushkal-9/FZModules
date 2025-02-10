@@ -151,20 +151,12 @@ struct memobj<Ctype>::impl {
 
   void extrema_scan(double& max_value, double& min_value, double& range)
   {
-    if (std::is_same<Ctype, float>::value or std::is_same<Ctype, double>::value) {
-      // may not work for _uniptr
-      Ctype result[4];
-      // psz::thrustgpu::GPU_extrema_rawptr<Ctype>((Ctype*)m->d,
-      // m->len, result);
-      psz::utils::probe_extrema<CUDA, Ctype>(d, _len, result);
+    constexpr auto type_supported = std::is_same_v<Ctype, float> or std::is_same_v<Ctype, double>;
 
-      min_value = result[0];
-      max_value = result[1];
-      range = max_value - min_value;
-    }
-    else {
-      throw std::runtime_error("`extrema_scan` only supports `float` or `double`.");
-    }
+    if (type_supported)
+      psz::analysis::GPU_probe_extrema<Ctype, CUDA>(d, _len, max_value, min_value, range);
+    else
+      throw std::runtime_error("`extrema_scan` supports `float` or `double` for now.");
   }
 
   // setter by borrowing
@@ -221,9 +213,9 @@ struct memobj<Ctype>::impl {
   Ctype& uniptr(uint32_t i) { return uni[i]; };
   Ctype& uniat(uint32_t i) { return uni[i]; };
 
-  GPU_LEN3 len3() const { return MAKE_GPU_LEN3(lx, ly, lz); };
+  GPULEN3 len3() const { return MAKE_GPULEN3(lx, ly, lz); };
 
-  GPU_LEN3 stride3() const { return MAKE_GPU_LEN3(1, sty, stz); };
+  GPULEN3 stride3() const { return MAKE_GPULEN3(1, sty, stz); };
 };
 
 //////////////////////////////// back to main class
@@ -433,13 +425,13 @@ Ctype& memobj<Ctype>::uniat(uint32_t i)
 };
 
 template <typename Ctype>
-GPU_LEN3 memobj<Ctype>::len3() const
+GPULEN3 memobj<Ctype>::len3() const
 {
   return pimpl->len3();
 };
 
 template <typename Ctype>
-GPU_LEN3 memobj<Ctype>::stride3() const
+GPULEN3 memobj<Ctype>::stride3() const
 {
   return pimpl->stride3();
 };

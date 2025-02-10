@@ -9,7 +9,7 @@
 
 namespace phf {
 
-#if defined(PSZ_USE_CUDA)
+#if defined(FZMOD_USE_CUDA)
 const char* BACKEND_TEXT = "cuHF";
 #elif defined(PSZ_USE_HIP)
 const char* BACKEND_TEXT = "hipHF";
@@ -29,7 +29,7 @@ size_t capi_phf_coarse_tune_sublen(size_t len)
   using phf::HuffmanHelper;
   auto div = [](auto _l, auto _subl) { return (_l - 1) / _subl + 1; };
 
-#if defined(PSZ_USE_CUDA) || defined(PSZ_USE_HIP)
+#if defined(FZMOD_USE_CUDA) || defined(PSZ_USE_HIP)
   // TODO ROCm GPUs should use different constants.
   int current_dev = 0;
   cudaSetDevice(current_dev);

@@ -3,7 +3,7 @@
 #include "fzg_kernel.hh"
 #include "fzg_type.h"
 
-struct psz::FzgCodec::impl {
+struct fz::FzgCodec::impl {
  public:
   using Header = fzg_header;
   using M = uint32_t;
@@ -85,25 +85,25 @@ struct psz::FzgCodec::impl {
 
 // link impl and front-end
 
-psz::FzgCodec::FzgCodec(size_t const data_len)
+fz::FzgCodec::FzgCodec(size_t const data_len)
     : pimpl{std::make_unique<impl>(data_len)} {}
 
-psz::FzgCodec::~FzgCodec() {};
+fz::FzgCodec::~FzgCodec() {};
 
-psz::FzgCodec* psz::FzgCodec::encode(E* in_data, size_t const data_len,
+fz::FzgCodec* fz::FzgCodec::encode(E* in_data, size_t const data_len,
                                      uint8_t** out_comp, size_t* comp_len,
                                      void* stream) {
   pimpl->encode(in_data, data_len, out_comp, comp_len, stream);
   return this;
 }
 
-psz::FzgCodec* psz::FzgCodec::decode(uint8_t* in_comp, size_t const comp_len,
+fz::FzgCodec* fz::FzgCodec::decode(uint8_t* in_comp, size_t const comp_len,
                                      E* out_data, size_t const data_len,
                                      void* stream) {
   pimpl->decode(in_comp, comp_len, out_data, data_len, (cudaStream_t)stream);
   return this;
 }
 
-size_t psz::FzgCodec::expose_padded_input_len() const {
+size_t fz::FzgCodec::expose_padded_input_len() const {
   return pimpl->config.at("pad_len");
 }

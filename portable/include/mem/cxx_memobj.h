@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "c_type.h"
-#include "psz/type.h"
+#include "type.h"
 #include "cxx_array.h"
 #include "cxx_backends.h"
 #include "typing.hh"
@@ -84,8 +84,8 @@ class memobj {
   Ctype& uniptr(uint32_t i);
   Ctype& uniat(uint32_t i);
 
-  GPU_LEN3 len3() const;
-  GPU_LEN3 stride3() const;
+  GPULEN3 len3() const;
+  GPULEN3 stride3() const;
 };
 
 #define MEM(T) memobj<T>

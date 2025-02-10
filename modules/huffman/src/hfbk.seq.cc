@@ -2,7 +2,7 @@
 #include <cstdint>
 
 #include "busyheader.hh"
-#include "cusz/type.h"
+#include "type.h"
 #include "cxx_hfbk.h"
 #include "hf.h"
 #include "hfbk_impl.hh"

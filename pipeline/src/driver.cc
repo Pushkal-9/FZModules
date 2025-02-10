@@ -7,3 +7,22 @@
 // libpressio integration? ask robert/song/PIs
 
 // sz3 integration? add in these modules -- fit this to SZ3 or SZ3 to this?
+
+#ifndef FZMOD_DRIVER
+#define FZMOD_DRIVER
+
+#include <iostream>
+
+#include "fzg_class.hh"
+#include "hist.hh"
+#include "hfclass.hh"
+#include "lorenzo.hh"
+#include "spline.hh"
+
+int main() {
+    std::cout << "Hello, World!" << std::endl;
+
+    return 0;
+}
+
+#endif // FZMOD_DRIVER

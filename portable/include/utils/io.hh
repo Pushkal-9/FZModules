@@ -3,7 +3,6 @@
 
 // Jiannan Tian
 // (created) 2019-08-27 (update) 2020-09-20...2024-12-22
-// file I/O utilities for portable
 
 #include <fstream>
 #include <iostream>
@@ -18,7 +17,6 @@ namespace _portable::utils {
 template <typename T>
 int fromfile(const std::string& fname, T* _a, size_t const dtype_len)
 {
-  int status = PORTABLE_IO_SUCCESS;
   std::ifstream ifs(fname.c_str(), std::ios::binary | std::ios::in);
   if (not ifs.is_open()) return PORTABLE_IFS_FAIL_TO_OPEN;
   if (not _a) return PORTABLE_FAIL_NULLPTR;

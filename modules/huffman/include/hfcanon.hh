@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <cstring>
 
-#include "psz/type.h"
+#include "type.h"
 
 template <typename E, typename H>
 class hf_space {

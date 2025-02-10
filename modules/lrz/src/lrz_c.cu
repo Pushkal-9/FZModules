@@ -20,7 +20,7 @@
 #include "utils/timer.hh"
 
 #define SETUP_ZIGZAG                    \
-  using ZigZag = psz::ZigZag<Eq>;       \
+  using ZigZag = fz::ZigZag<Eq>;       \
   using EqUInt = typename ZigZag::UInt; \
   using EqSInt = typename ZigZag::SInt;
 
@@ -284,7 +284,7 @@ __global__ void KERNEL_CUHIP_lorenzo_prequant(TIN* const in,
 namespace fz::module {
 
 template <typename T, bool UseZigZag, typename Eq>
-pszerror GPU_c_lorenzo_nd_with_outlier(T* const in_data,
+fzmoderror GPU_c_lorenzo_nd_with_outlier(T* const in_data,
                                        stdlen3 const _data_len3,
                                        Eq* const out_eq, void* out_outlier,
                                        f8 const eb, uint16_t const radius,
@@ -354,7 +354,7 @@ fzmoderror GPU_lorenzo_prequant(TIN* const in, size_t const len,
 
 // -----------------------------------------------------------------------------
 #define INSTANCIATE_GPU_L23R_3params(T, USE_ZIGZAG, Eq)            \
-  template pszerror                                                \
+  template fzmoderror                                                \
   fz::module::GPU_c_lorenzo_nd_with_outlier<T, USE_ZIGZAG, Eq>(   \
       T* const in_data, stdlen3 const data_len3, Eq* const out_eq, \
       void* out_outlier, f8 const eb, uint16_t const radius, void* stream);
@@ -370,7 +370,7 @@ fzmoderror GPU_lorenzo_prequant(TIN* const in, size_t const len,
 // -----------------------------------------------------------------------------
 
 #define INSTANCIATE_GPU_L23_PREQ_3params(TIN, TOUT, REV)                    \
-  template pszerror fz::module::GPU_lorenzo_prequant<TIN, TOUT, REV>(      \
+  template fzmoderror fz::module::GPU_lorenzo_prequant<TIN, TOUT, REV>(      \
       TIN* const in, size_t const len, PROPER_EB const eb, TOUT* const out, \
       float* time_elapsed, void* stream);
 

@@ -5,7 +5,7 @@
 
 #include "hfbk_impl.hh"
 #include "hfword.hh"
-#include "utils/vis_stat.hh"
+#include "vis_stat.hh"
 
 namespace {
 

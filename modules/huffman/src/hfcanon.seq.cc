@@ -11,7 +11,7 @@
 
 #include "hfcanon.hh"
 
-#include "cusz/type.h"
+#include "type.h"
 #include "hfword.hh"
 
 template <typename E, typename H>

@@ -14,18 +14,26 @@ option(BUILD_SHARED_LIBS "prefer shared libaries" ON)
 
 set(FZMOD_BACKEND "CUDA" CACHE STRING "Select the backend for the FZ Compression Modules library")
 
+# define PSZ_USE_CUDA
+if(FZMOD_BACKEND STREQUAL "CUDA")
+  add_compile_definitions(FZMOD_USE_CUDA)
+  add_compile_definitions(_PORTABLE_USE_CUDA)
+endif()
+
 find_package(CUDAToolkit REQUIRED)
+enable_language(CUDA)
 
 # define compile settings cmake interface library
 add_library(fzmod_compile_settings INTERFACE)
-target_compile_definitions(
+target_compile_options(
   fzmod_compile_settings 
-  INTERFACE $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:
-  --extended-lambda 
-  --expt-relaxed-constexpr
-  -Wno-deprecated-declarations
+  INTERFACE 
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--extended-lambda>
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--expt-relaxed-constexpr>
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Wno-deprecated-declarations>
 )
 target_compile_features(fzmod_compile_settings INTERFACE cxx_std_17 cuda_std_17)
+target_link_libraries(fzmod_compile_settings INTERFACE CUDA::cudart)
 
 # include directories
 target_include_directories(fzmod_compile_settings INTERFACE
@@ -55,26 +63,26 @@ target_include_directories(fzmod_compile_settings INTERFACE
 
 # LIBRARIES
 
-## FZ Portable MEM module
-add_library(fz_mem
-  portable/src/mem/memobj.f.cc
-  portable/src/mem/memobj.i.cc
-  portable/src/mem/memobj.u.cc
-  portable/src/mem/memobj.misc.cc)
-add_library(FZMOD::mem ALIAS fz_mem)
-add_library(FZMOD::cu_mem ALIAS fz_mem)
-target_link_libraries(fz_mem
-  PUBLIC
-  fzmod_compile_settings
-  CUDA::cudart
-)
+# ## FZ Portable MEM module
+# add_library(fz_mem
+#   portable/src/mem/memobj.f.cc
+#   portable/src/mem/memobj.i.cc
+#   portable/src/mem/memobj.u.cc
+#   portable/src/mem/memobj.misc.cc)
+# add_library(FZMOD::mem ALIAS fz_mem)
+# add_library(FZMOD::cu_mem ALIAS fz_mem)
+# target_link_libraries(fz_mem
+#   PUBLIC
+#   fzmod_compile_settings
+#   CUDA::cudart
+# )
 
 # Individiual Modules
 
 ## FZG Codec Module
 add_library(fzmod_cu_fzg
-  codec/fzg/src/fzg_kernel.cu
-  codec/fzg/src/fzg_class.cc
+  modules/fzg/src/fzg_kernel.cu
+  modules/fzg/src/fzg_class.cc
 )
 target_link_libraries(fzmod_cu_fzg
   PUBLIC
@@ -99,6 +107,7 @@ add_library(FZMOD::CUDA::histogram ALIAS fzmod_cu_histogram)
 add_library(FZMOD::histogram ALIAS fzmod_cu_histogram)
 
 ## Huffman Module
+set_source_files_properties(modules/huffman/src/hfclass.cc PROPERTIES LANGUAGE CUDA)
 add_library(fzmod_cu_huffman
   modules/huffman/src/hfclass.cc
   modules/huffman/src/hf_est.cc
@@ -144,7 +153,7 @@ add_library(FZMOD::CUDA::spline ALIAS fzmod_cu_spline)
 add_library(FZMOD::spline ALIAS fzmod_cu_spline)
 
 # combine all modules into a single library
-add_library(cusz
+add_library(fzmod
   pipeline/src/driver.cc
 )
 target_link_libraries(fzmod
@@ -174,7 +183,7 @@ set_target_properties(fzmod-bin PROPERTIES OUTPUT_NAME fzmod)
 # install libs
 install(TARGETS fzmod_compile_settings EXPORT FZModulesTargets)
 install(TARGETS 
-  fz_mem 
+  # fz_mem 
   fzmod_cu_fzg 
   fzmod_cu_histogram 
   fzmod_cu_huffman 

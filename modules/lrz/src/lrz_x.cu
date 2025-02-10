@@ -298,7 +298,7 @@ __global__ void KERNEL_CUHIP_x_lorenzo_3d1l(  //
 namespace fz::module {
 
 template <typename T, bool UseZigZag, typename Eq>
-pszerror GPU_x_lorenzo_nd(Eq* const in_eq, T* const in_outlier,
+fzmoderror GPU_x_lorenzo_nd(Eq* const in_eq, T* const in_outlier,
                           T* const out_data, stdlen3 const _data_len3,
                           f8 const eb, uint16_t const radius, void* stream) {
   using namespace fz::kernelconfig;

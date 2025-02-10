@@ -11,7 +11,7 @@
  */
 
 #include "busyheader.hh"
-#include "cusz/type.h"
+#include "type.h"
 #include "hfbk_impl.hh"
 #include "hfword.hh"
 #include "utils/timer.hh"
