@@ -29,8 +29,8 @@ extern "C" {
 
 // typedef _portable_stream_t fzmod_stream_t;
 // typedef _portable_mem_control fzmod_mem_control;
-// typedef _portable_dtype fzmod_dtype;
-// typedef _portable_len3 fzmod_len3;
+typedef _portable_dtype fzmod_dtype;
+typedef _portable_len3 fzmod_len3;
 // typedef _portable_size3 fzmod_size3;
 // typedef _portable_data_summary fzmod_data_summary;
 
@@ -65,11 +65,30 @@ typedef enum {
 } fzmod_error_status;
 typedef fzmod_error_status fzmoderror;
 
-// typedef uint8_t byte_t;
-// typedef size_t szt;
+typedef uint8_t byte_t;
+typedef size_t szt;
 
-// typedef enum { Abs, Rel } fzmod_mode;
-// typedef enum { Lorenzo, LorenzoZigZag, LorenzoProto, Spline } fzmod_predtype;
+// typedef enum {
+//   FZgpu,
+//   Histogram,
+//   Huffman,
+//   Lorenzo,
+//   Spline,
+// } fzmod_module;
+
+typedef enum { Abs, Rel } fzmod_mode;
+typedef enum { Lorenzo, LorenzoZigZag, LorenzoProto, Spline } fzmod_predtype;
+
+typedef enum {
+  Huffman,
+  FZGPUCodec,
+} fzmod_codectype;
+
+typedef enum {
+  HistogramGeneric,
+  HistogramSparse,
+  HistogramNull,
+} fzmod_histogramtype;
 
 // typedef enum {
 //   FP64toFP32,
@@ -81,18 +100,6 @@ typedef fzmod_error_status fzmoderror;
 // } fzmod_preprocestype;
 
 // typedef enum {
-//   Huffman,
-//   HuffmanRevisit,
-//   FZGPUCodec,
-// } fzmod_codectype;
-
-// typedef enum {
-//   HistogramGeneric,
-//   HistogramSparse,
-//   HistogramNull,
-// } fzmod_histogramtype;
-
-// typedef enum {
 //   STAGE_PREDICT = 0,
 //   STAGE_HISTOGRM = 1,
 //   STAGE_BOOK = 3,
@@ -101,11 +108,11 @@ typedef fzmod_error_status fzmoderror;
 //   STAGE_END = 6
 // } fzmod_time_stage;
 
-// struct fzmod_context;
-// typedef struct fzmod_context fzmod_ctx;
+struct fzmod_context;
+typedef struct fzmod_settings fzmod_settings;
 
-// struct fzmod_header;
-// typedef struct fzmod_header fzmod_header;
+struct fzmod_header;
+typedef struct fzmod_header fzmod_header;
 
 // typedef struct fzmod_compressor {
 //   void* compressor;

@@ -63,19 +63,15 @@ target_include_directories(fzmod_compile_settings INTERFACE
 
 # LIBRARIES
 
-# ## FZ Portable MEM module
-# add_library(fz_mem
-#   portable/src/mem/memobj.f.cc
-#   portable/src/mem/memobj.i.cc
-#   portable/src/mem/memobj.u.cc
-#   portable/src/mem/memobj.misc.cc)
-# add_library(FZMOD::mem ALIAS fz_mem)
-# add_library(FZMOD::cu_mem ALIAS fz_mem)
-# target_link_libraries(fz_mem
-#   PUBLIC
-#   fzmod_compile_settings
-#   CUDA::cudart
-# )
+## FZ utils
+add_library(fz_utils
+  portable/src/utils/extrema.cu
+)
+target_link_libraries(fz_utils
+  PUBLIC
+  fzmod_compile_settings
+  CUDA::cudart
+)
 
 # Individiual Modules
 
@@ -154,11 +150,13 @@ add_library(FZMOD::spline ALIAS fzmod_cu_spline)
 
 # combine all modules into a single library
 add_library(fzmod
-  pipeline/src/driver.cc
+  pipeline/src/demo.cuda.cc
+  pipeline/src/libfzmod.cc
 )
 target_link_libraries(fzmod
   PUBLIC
   fzmod_compile_settings
+  fz_utils
   # modules
   fzmod_cu_fzg
   fzmod_cu_histogram
@@ -173,8 +171,8 @@ add_library(FZMOD::all ALIAS fzmod)
 ############################
 
 # export binary fzmod
-add_executable(fzmod-bin pipeline/src/driver.cc)
-set_source_files_properties(pipeline/src/driver.cc PROPERTIES LANGUAGE CUDA)
+add_executable(fzmod-bin pipeline/src/demo.cuda.cc)
+set_source_files_properties(pipeline/src/demo.cuda.cc PROPERTIES LANGUAGE CUDA)
 target_link_libraries(fzmod-bin PRIVATE fzmod)
 set_target_properties(fzmod-bin PROPERTIES OUTPUT_NAME fzmod)
 
@@ -183,7 +181,7 @@ set_target_properties(fzmod-bin PROPERTIES OUTPUT_NAME fzmod)
 # install libs
 install(TARGETS fzmod_compile_settings EXPORT FZModulesTargets)
 install(TARGETS 
-  # fz_mem 
+  fz_utils
   fzmod_cu_fzg 
   fzmod_cu_histogram 
   fzmod_cu_huffman 
