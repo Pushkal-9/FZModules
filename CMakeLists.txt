@@ -37,25 +37,29 @@ target_link_libraries(fzmod_compile_settings INTERFACE CUDA::cudart)
 
 # include directories
 target_include_directories(fzmod_compile_settings INTERFACE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/portable/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tools/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tools/src/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/codec/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/stat/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/predictor/>
   # fzg codec module:
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/fzg/include/>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/fzg/src/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/codec/fzg/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/codec/fzg/src/>
   # histogram module
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/histogram/include/>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/histogram/src/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/stat/histogram/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/stat/histogram/src/>
   # huffman module
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/huffman/include/>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/huffman/src/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/codec/huffman/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/codec/huffman/src/>
   # lorenzo module
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/lrz/include/>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/lrz/src/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/predictor/lrz/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/predictor/lrz/src/>
   # spline module
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/spline/include/>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/spline/src/>
-  # pipeline
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/pipeline/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/predictor/spline/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/predictor/spline/src/>
+  # # pipeline
+  # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/pipeline/include/>
+  # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/pipeline/src/>
   # misc
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -63,9 +67,9 @@ target_include_directories(fzmod_compile_settings INTERFACE
 
 # LIBRARIES
 
-## FZ utils
+# FZ utils
 add_library(fz_utils
-  portable/src/utils/extrema.cu
+  tools/src/extrema.cu
 )
 target_link_libraries(fz_utils
   PUBLIC
@@ -77,8 +81,8 @@ target_link_libraries(fz_utils
 
 ## FZG Codec Module
 add_library(fzmod_cu_fzg
-  modules/fzg/src/fzg_kernel.cu
-  modules/fzg/src/fzg_class.cc
+  modules/codec/fzg/src/fzg_kernel.cu
+  modules/codec/fzg/src/fzg_class.cc
 )
 target_link_libraries(fzmod_cu_fzg
   PUBLIC
@@ -89,10 +93,10 @@ add_library(FZMOD::fzg ALIAS fzmod_cu_fzg)
 
 ## Histogram Module
 add_library(fzmod_cu_histogram
-  modules/histogram/src/hist_generic_seq.cc
-  modules/histogram/src/hist_generic.cu
-  modules/histogram/src/histsp.seq.cc
-  modules/histogram/src/histsp.cu
+  modules/stat/histogram/src/hist_generic_seq.cc
+  modules/stat/histogram/src/hist_generic.cu
+  modules/stat/histogram/src/histsp.seq.cc
+  modules/stat/histogram/src/histsp.cu
 )
 target_link_libraries(fzmod_cu_histogram
   PUBLIC
@@ -103,17 +107,16 @@ add_library(FZMOD::CUDA::histogram ALIAS fzmod_cu_histogram)
 add_library(FZMOD::histogram ALIAS fzmod_cu_histogram)
 
 ## Huffman Module
-set_source_files_properties(modules/huffman/src/hfclass.cc PROPERTIES LANGUAGE CUDA)
 add_library(fzmod_cu_huffman
-  modules/huffman/src/hfclass.cc
-  modules/huffman/src/hf_est.cc
-  modules/huffman/src/hfbk_impl1.seq.cc
-  modules/huffman/src/hfbk_impl2.seq.cc
-  modules/huffman/src/hfbk_internal.seq.cc
-  modules/huffman/src/hfbk.seq.cc
-  modules/huffman/src/hfcanon.seq.cc
-  modules/huffman/src/hfcxx_module.cu
-  modules/huffman/src/libphf.cc
+  modules/codec/huffman/src/hfclass.cc
+  # modules/codec/huffman/src/hf_est.cc
+  modules/codec/huffman/src/hfbk_impl1.seq.cc
+  modules/codec/huffman/src/hfbk_impl2.seq.cc
+  modules/codec/huffman/src/hfbk_internal.seq.cc
+  modules/codec/huffman/src/hfbk.seq.cc
+  modules/codec/huffman/src/hfcanon.seq.cc
+  modules/codec/huffman/src/hfcxx_module.cu
+  modules/codec/huffman/src/libphf.cc
 )
 target_link_libraries(fzmod_cu_huffman
   PUBLIC
@@ -123,10 +126,10 @@ target_link_libraries(fzmod_cu_huffman
 add_library(FZMOD::CUDA::huffman ALIAS fzmod_cu_huffman)
 add_library(FZMOD::huffman ALIAS fzmod_cu_huffman)
 
-## Lorenzo Module
+# Lorenzo Module
 add_library(fzmod_cu_lrz
-  modules/lrz/src/lrz_c.cu
-  modules/lrz/src/lrz_x.cu
+  modules/predictor/lrz/src/lrz_c.cu
+  modules/predictor/lrz/src/lrz_x.cu
 )
 target_link_libraries(fzmod_cu_lrz
   PUBLIC
@@ -138,7 +141,7 @@ add_library(FZMOD::lrz ALIAS fzmod_cu_lrz)
 
 ## Spline Module
 add_library(fzmod_cu_spline
-  modules/spline/src/spline3.cu
+  modules/predictor/spline/src/spline3.cu
 )
 target_link_libraries(fzmod_cu_spline
   PUBLIC
@@ -150,14 +153,13 @@ add_library(FZMOD::spline ALIAS fzmod_cu_spline)
 
 # combine all modules into a single library
 add_library(fzmod
-  pipeline/src/demo.cuda.cc
-  pipeline/src/libfzmod.cc
+  demo.cc
+  # pipeline/src/libfzmod.cc
 )
 target_link_libraries(fzmod
   PUBLIC
   fzmod_compile_settings
   fz_utils
-  # modules
   fzmod_cu_fzg
   fzmod_cu_histogram
   fzmod_cu_huffman
@@ -171,8 +173,8 @@ add_library(FZMOD::all ALIAS fzmod)
 ############################
 
 # export binary fzmod
-add_executable(fzmod-bin pipeline/src/demo.cuda.cc)
-set_source_files_properties(pipeline/src/demo.cuda.cc PROPERTIES LANGUAGE CUDA)
+add_executable(fzmod-bin demo.cc)
+set_source_files_properties(demo.cc PROPERTIES LANGUAGE CUDA)
 target_link_libraries(fzmod-bin PRIVATE fzmod)
 set_target_properties(fzmod-bin PROPERTIES OUTPUT_NAME fzmod)
 
@@ -228,12 +230,11 @@ install(FILES
 
 # install headers
 install(DIRECTORY
-  portable/include/
-  modules/fzg/include/
-  modules/histogram/include/
-  modules/huffman/include/
-  modules/lrz/include/
-  modules/spline/include/
-  pipeline/include/
+  tools/include/
+  modules/codec/fzg/include/
+  modules/stat/histogram/include/
+  modules/codec/huffman/include/
+  modules/predictor/lrz/include/
+  modules/predictor/spline/include/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fzmod
 )
