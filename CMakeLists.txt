@@ -70,6 +70,7 @@ target_include_directories(fzmod_compile_settings INTERFACE
 # FZ utils
 add_library(fz_utils
   tools/src/extrema.cu
+  tools/src/spvn.cu
 )
 target_link_libraries(fz_utils
   PUBLIC

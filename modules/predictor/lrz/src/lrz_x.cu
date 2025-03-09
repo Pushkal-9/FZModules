@@ -432,3 +432,10 @@ int GPU_x_lorenzo_nd(
 #define INSTANTIATE_GPU_L23X_1param(T) \
   INSTANTIATE_GPU_L23X_2params(T, uint8_t); \
   INSTANTIATE_GPU_L23X_2params(T, uint16_t);
+
+INSTANTIATE_GPU_L23X_1param(float);
+INSTANTIATE_GPU_L23X_1param(double);
+
+#undef INSTANTIATE_GPU_L23X_1param
+#undef INSTANTIATE_GPU_L23X_2params
+#undef INSTANTIATE_GPU_L23X_3params

@@ -30,7 +30,7 @@ int GPU_c_lorenzo_nd_with_outlier(
 
 template <typename T, bool UseZigZag, typename Eq>
 int GPU_x_lorenzo_nd(
-    Eq* const in_eq, T* const in_outlier, T* const out_data, stdlen3 const data_len3,
+    Eq* const in_eq, T* const in_outlier, T* const out_data, stdlen3 const _data_len3,
     double const ebx2, double const ebx2_r, uint16_t const radius, void* stream);
 
 template <typename TIN, typename TOUT, bool ReverseProcess>

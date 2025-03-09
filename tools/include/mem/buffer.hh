@@ -32,23 +32,26 @@ class InternalBuffer {
     uint32_t x, y, z;
     size_t const len;
 
-    InternalBuffer(Config* config, uint32_t x, uint32_t y = 1, uint32_t z = 1) :
-      x(x), y(y), z(z), len(x * y * z), conf(config) {
+    bool is_comp;
+
+    InternalBuffer(Config* config, uint32_t x, uint32_t y = 1, uint32_t z = 1, bool is_comp = true):
+      x(x), y(y), z(z), len(x * y * z), conf(config), is_comp(is_comp) {
       
       d_ectrl = MAKE_UNIQUE_DEVICE(uint16_t, ALIGN_4Ki(len)); // for FZGPU
 
-      compact = new Compact(len/ 5);
-      d_anchor = MAKE_UNIQUE_DEVICE(DType, conf->anchor512_len);
-      d_hist = MAKE_UNIQUE_DEVICE(uint32_t, conf->radius * 2);
-      d_compressed = MAKE_UNIQUE_DEVICE(uint8_t, len * 4 / 2);
-      h_compressed = MAKE_UNIQUE_HOST(uint8_t, len * 4 / 2);
-      d_top1 = MAKE_UNIQUE_DEVICE(uint32_t, 1);
-      h_top1 = MAKE_UNIQUE_HOST(uint32_t, 1);
-      
+      if (is_comp) {
+        compact = new Compact(len/ 5);
+        d_anchor = MAKE_UNIQUE_DEVICE(DType, conf->anchor512_len);
+        d_hist = MAKE_UNIQUE_DEVICE(uint32_t, conf->radius * 2);
+        d_compressed = MAKE_UNIQUE_DEVICE(uint8_t, len * 4 / 2);
+        h_compressed = MAKE_UNIQUE_HOST(uint8_t, len * 4 / 2);
+        d_top1 = MAKE_UNIQUE_DEVICE(uint32_t, 1);
+        h_top1 = MAKE_UNIQUE_HOST(uint32_t, 1);
+      }
     }
 
     ~InternalBuffer() {
-      delete compact;
+      if (is_comp) delete compact;
     }
 
     // Getters

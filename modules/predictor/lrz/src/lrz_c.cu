@@ -475,22 +475,10 @@ int GPU_c_lorenzo_nd_with_outlier(
         <<<c_lorenzo<1>::thread_grid(data_len3), c_lorenzo<1>::thread_block, 0, (cudaStream_t)stream>>>(
             in_data, data_len3, leap3, out_eq, ot->val(), ot->idx(), ot->num(), radius, (T)ebx2_r, out_top1);
   else if (d == 2) {
-
     fz::KERNEL_CUHIP_c_lorenzo_2d1l__32x32<T, UseZigZag, Eq>
       <<<c_lorenzo<2, 32, 32>::thread_grid(data_len3), 
-      c_lorenzo<2, 32, 32>::thread_block, 0, (cudaStream_t)stream>>>
-      (
-        in_data, 
-        data_len3, 
-        out_eq, 
-        ot->val(), 
-        ot->idx(), 
-        ot->num(), 
-        radius,
-        (T)ebx2_r, 
-        out_top1 
-      );
-
+      c_lorenzo<2, 32, 32>::thread_block, 0, (cudaStream_t)stream>>>(in_data, data_len3, leap3,
+        out_eq, ot->val(), ot->idx(), ot->num(), radius,(T)ebx2_r, out_top1);
   }
   else if (d == 3)
     fz::KERNEL_CUHIP_c_lorenzo_3d1l<T, UseZigZag, Eq>

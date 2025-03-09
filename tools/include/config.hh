@@ -12,6 +12,10 @@ namespace fz {
 
   class Config {
     public:
+
+      bool toFile = true;
+      std::string fname;
+
       double eb = 1e-3;
       EB_TYPE eb_type = EB_ABS;
       ALGO algo = ALGO_LORENZO;
@@ -42,7 +46,6 @@ namespace fz {
       // lorenzo
       bool use_lorenzo_regular = true;
       bool use_lorenzo_zigzag = false;
-      // bool use_lorenzo_prototype = false;
 
       //spline
       size_t const anchor512_len;
@@ -60,10 +63,6 @@ namespace fz {
       std::array<size_t, 3> anchor_len3() const {
         return std::array<size_t, 3>{_div(x, BLK), _div(y, BLK), _div(z, BLK)};
       }
-
-      // save and load to disk operations
-      // void save(std::string fname);
-      // void load(std::string fname);
 
   };
 
