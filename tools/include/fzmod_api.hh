@@ -9,8 +9,6 @@
 #include "timer.hh"
 #include "mem/buffer.hh"
 #include "config.hh"
-#include "compare.hh"
-#include "spv.hh"
 
 #define HEADER_SIZE 128
 
@@ -168,7 +166,7 @@ struct Compressor {
     // extrema check if relative eb
     if (conf->eb_type == EB_TYPE::EB_REL) {
       double _max_val, _min_val, _range;
-      analysis::GPU_probe_extrema<T>(input_data, conf->len, _max_val, _min_val, _range);
+      fz::analysis::GPU_probe_extrema<T>(input_data, conf->len, _max_val, _min_val, _range);
       conf->eb *= _range;
       conf->logging_max = _max_val;
       conf->logging_min = _min_val;

@@ -57,9 +57,12 @@ target_include_directories(fzmod_compile_settings INTERFACE
   # spline module
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/predictor/spline/include/>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/predictor/spline/src/>
-  # # pipeline
-  # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/pipeline/include/>
-  # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/pipeline/src/>
+  # extrema module
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/stat/extrema/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/stat/extrema/src/>
+  # spvn module
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/stat/spvn/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/stat/spvn/src/>
   # misc
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -69,8 +72,8 @@ target_include_directories(fzmod_compile_settings INTERFACE
 
 # FZ utils
 add_library(fz_utils
-  tools/src/extrema.cu
-  tools/src/spvn.cu
+  modules/stat/extrema/src/extrema.cu
+  modules/stat/spvn/src/spvn.cu
 )
 target_link_libraries(fz_utils
   PUBLIC
