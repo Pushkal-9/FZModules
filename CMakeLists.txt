@@ -4,6 +4,14 @@ project(FZModules LANGUAGES CUDA CXX C VERSION 0.1)
 
 include(GNUInstallDirs)
 
+option(ENABLE_COVERAGE "Enable coverage reporting" ON)
+
+if(ENABLE_COVERAGE)
+  message(STATUS "Compiling with coverage flags")
+  add_compile_options(--coverage -O0 -g)
+  add_link_options(--coverage)
+endif()
+
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -23,7 +31,10 @@ endif()
 find_package(CUDAToolkit REQUIRED)
 enable_language(CUDA)
 
-# define compile settings cmake interface library
+# Include GoogleTest
+add_subdirectory(third_party/googletest)
+
+# Compile settings interface
 add_library(fzmod_compile_settings INTERFACE)
 target_compile_options(
   fzmod_compile_settings 
@@ -242,3 +253,6 @@ install(DIRECTORY
   modules/predictor/spline/include/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fzmod
 )
+
+# Add modularized test suite
+add_subdirectory(tests)
