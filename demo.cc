@@ -21,12 +21,12 @@ void compress_demo(std::string fname, size_t x, size_t y, size_t z) {
     conf->eb_type = fz::EB_TYPE::EB_REL;
     conf->algo = fz::ALGO::ALGO_LORENZO;
     conf->precision = fz::PRECISION::PRECISION_FLOAT;
-    conf->codec = fz::CODEC::CODEC_FZG;
+    conf->codec = fz::CODEC::CODEC_HUFFMAN;
     conf->fname = fname;
-    conf->use_lorenzo_zigzag = true;
-    conf->use_lorenzo_regular = false;
-    // conf->use_histogram_generic = true;
-    // conf->use_histogram_sparse = false;
+    // conf->use_lorenzo_zigzag = true;
+    // conf->use_lorenzo_regular = false;
+    conf->use_histogram_generic = true;
+    conf->use_histogram_sparse = false;
 
     // make the cudastream
     cudaStream_t stream;
@@ -49,7 +49,7 @@ void compress_demo(std::string fname, size_t x, size_t y, size_t z) {
     // create compressor object
     fz::Compressor<float> compressor(*conf);
 
-    std::cout << "Compressing...\n" << std::endl;
+    // std::cout << "Compressing...\n" << std::endl;
 
     // compress the data -- send in gpu data and get back 
     compressor.compress(input_data_device, &internal_compressed, stream);
@@ -61,11 +61,11 @@ void compress_demo(std::string fname, size_t x, size_t y, size_t z) {
     cudaMemcpy(compressed_data_host, internal_compressed, conf->comp_size, cudaMemcpyDeviceToHost);
 
     // print statistics
-    std::cout << "compressed!\n" << std::endl;
-    std::cout << "original size: " << conf->orig_size << std::endl;
-    std::cout << "compressed size: " << conf->comp_size << std::endl;
-    std::cout << "compression ratio: " << (float)conf->orig_size / (float)conf->comp_size << std::endl;
-    std::cout << "\n\n" << std::endl;
+    // std::cout << "compressed!\n" << std::endl;
+    // std::cout << "original size: " << conf->orig_size << std::endl;
+    // std::cout << "compressed size: " << conf->comp_size << std::endl;
+    // std::cout << "compression ratio: " << (float)conf->orig_size / (float)conf->comp_size << std::endl;
+    // std::cout << "\n\n" << std::endl;
 
     // free memory
     cudaFreeHost(input_data_host);
@@ -94,7 +94,12 @@ void decompress_demo_file(std::string fname) {
     size_t original_size = decompressor.conf->orig_size;
     cudaMalloc(&decompressed, original_size);
 
-    decompressor.decompress(compressed_fname, decompressed, stream);
+    // get original data
+    float* original_data_host;
+    cudaMallocHost(&original_data_host, original_size);
+    utils::fromfile(fname, original_data_host, original_size);
+
+    decompressor.decompress(compressed_fname, decompressed, stream, original_data_host);
 
     cudaStreamDestroy(stream);
     cudaFree(decompressed);
