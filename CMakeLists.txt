@@ -1,15 +1,22 @@
 cmake_minimum_required(VERSION 3.18)
 
+# needed for WSL cuda
+link_directories(/usr/lib/wsl/lib)
+
 project(FZModules LANGUAGES CUDA CXX C VERSION 0.1)
 
 include(GNUInstallDirs)
 
-option(ENABLE_COVERAGE "Enable coverage reporting" ON)
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
 
 if(ENABLE_COVERAGE)
   message(STATUS "Compiling with coverage flags")
   add_compile_options(--coverage -O0 -g)
   add_link_options(--coverage)
+  # Include GoogleTest
+  add_subdirectory(third_party/googletest)
+  # Add modularized test suite
+  add_subdirectory(tests)
 endif()
 
 # Specify the C++ standard
@@ -30,9 +37,6 @@ endif()
 
 find_package(CUDAToolkit REQUIRED)
 enable_language(CUDA)
-
-# Include GoogleTest
-add_subdirectory(third_party/googletest)
 
 # Compile settings interface
 add_library(fzmod_compile_settings INTERFACE)
@@ -85,6 +89,8 @@ target_include_directories(fzmod_compile_settings INTERFACE
 add_library(fz_utils
   modules/stat/extrema/src/extrema.cu
   modules/stat/spvn/src/spvn.cu
+  modules/stat/extrema/src/calc_err.cu
+  modules/stat/extrema/src/max_err.cu
 )
 target_link_libraries(fz_utils
   PUBLIC
@@ -253,6 +259,3 @@ install(DIRECTORY
   modules/predictor/spline/include/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fzmod
 )
-
-# Add modularized test suite
-add_subdirectory(tests)

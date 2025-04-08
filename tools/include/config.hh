@@ -1,14 +1,13 @@
 #ifndef FZMOD_CONFIG_HH
 #define FZMOD_CONFIG_HH
 
-
-
 namespace fz {
 
   typedef enum EB_TYPE {EB_REL, EB_ABS} EB_TYPE;
   typedef enum ALGO {ALGO_LORENZO, ALGO_SPLINE} ALGO;
   typedef enum PRECISION {PRECISION_FLOAT, PRECISION_DOUBLE} PRECISION;
   typedef enum CODEC {CODEC_HUFFMAN, CODEC_FZG} CODEC;
+  typedef enum SECONDARY_CODEC {NONE, GZIP, LSTD} SECONDARY_CODEC;
 
   class Config {
     public:
@@ -16,11 +15,17 @@ namespace fz {
       bool toFile = true;
       std::string fname;
 
+      bool report = true;
+      bool compare = false;
+      bool dump = false;
+      bool comp = true;
+
       double eb = 1e-3;
       EB_TYPE eb_type = EB_ABS;
       ALGO algo = ALGO_LORENZO;
       PRECISION precision = PRECISION_FLOAT;
       CODEC codec = CODEC_HUFFMAN;
+      SECONDARY_CODEC secondary_codec = NONE;
 
       // relative error bounds
       double logging_max, logging_min;
@@ -66,6 +71,54 @@ namespace fz {
 
   };
 
+  struct fzmod_metrics {
+    
+    // timing data
+    double end_to_end_comp_time = 0;
+    double preprocessing_time = 0;
+    double prediction_time = 0;
+    double hist_time = 0;
+    double encoder_time = 0;
+    double file_io_time = 0;
+
+    double end_to_end_decomp_time = 0;
+    double decoding_time = 0;
+    double prediction_reversing_time = 0;
+    double decomp_file_io_time = 0;
+    double comparison_time = 0;
+
+    // data metrics
+    double min = 0;
+    double max = 0;
+    double range = 0;
+    double mean = 0;
+    double stddev = 0;
+
+    double decomp_min = 0;
+    double decomp_max = 0;
+    double decomp_range = 0;
+    double decomp_mean = 0;
+    double decomp_stddev = 0;
+
+    double max_err = 0;
+    size_t max_err_idx = 0;
+    double max_abserr = 0;
+
+    // compression metrics
+    double compression_ratio = 0;
+    double final_eb = 0;
+
+    uint64_t num_outliers = 0;
+
+    uint64_t orig_bytes = 0;
+    uint64_t comp_bytes = 0;
+
+    double bitrate = 0;
+    double nrmse = 0;
+    double coeff = 0;
+    double psnr = 0;
+
+  };
 
 } // namespace fz
 
