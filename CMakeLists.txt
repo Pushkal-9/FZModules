@@ -38,6 +38,17 @@ endif()
 find_package(CUDAToolkit REQUIRED)
 enable_language(CUDA)
 
+# Add CPM.cmake for fetching CCCL
+include(cmake/CPM.cmake)
+
+# Add CCCL package for CUDASTF support
+CPMAddPackage(
+  NAME CCCL
+  GITHUB_REPOSITORY "nvidia/cccl"
+  GIT_TAG "main"
+  OPTIONS "CCCL_ENABLE_UNSTABLE ON"
+)
+
 # Compile settings interface
 add_library(fzmod_compile_settings INTERFACE)
 target_compile_options(
@@ -199,6 +210,18 @@ set_source_files_properties(demo.cc PROPERTIES LANGUAGE CUDA)
 target_link_libraries(fzmod-bin PRIVATE fzmod)
 set_target_properties(fzmod-bin PROPERTIES OUTPUT_NAME fzmod)
 
+# CUDASTF demo executable
+add_executable(cudastf_demo cudastf/cudastf_demo.cc)
+set_source_files_properties(cudastf/cudastf_demo.cc PROPERTIES LANGUAGE CUDA)
+target_link_libraries(cudastf_demo 
+  PRIVATE 
+  fzmod_compile_settings
+  CUDA::cudart
+  CUDA::cuda_driver
+  CCCL::CCCL 
+  CCCL::cudax
+)
+
 ## INSTALLATION
 
 # install libs
@@ -220,6 +243,11 @@ install(TARGETS
 
 # install executable
 install(TARGETS fzmod-bin
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# install executable
+install(TARGETS fzmod-bin cudastf_demo
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
