@@ -8,6 +8,7 @@
 
 #include "proto_lorenzo_1d.cu"
 #include "hist_generic.cu"
+#include "huffman_class.hh"
 
 //? can I freeze data after prediction (outliers/quant codes) and then call another task?
 
@@ -33,6 +34,10 @@ int main(int argc, char **argv) {
 
   size_t data_len = len1 * len2 * len3;
   double eb = 2e-4;
+
+  int sublen, pardeg;
+  uint8_t* codec_comp_output{nullptr};
+  size_t codec_comp_output_len{0};
 
   // get dataset
   float* input_data_host;
@@ -62,12 +67,14 @@ int main(int argc, char **argv) {
   int hist_grid_d, hist_block_d, hist_shmem_use, hist_repeat;
   histogram_optimizer(data_len, 1024, hist_grid_d, hist_block_d, hist_shmem_use, hist_repeat);
 
+  // huffman kernel optimizer
+  capi_phf_coarse_tune(data_len, &sublen, &pardeg);
+
   // ~~~~~~~~~~~~~~~~~~~~~~~ CUDASTF Setup ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
   context ctx;
 
   // logical uncompressed data
   auto l_u = ctx.logical_data(input_data_host, {data_len});
-
 
   auto quant_codes = ctx.logical_data(shape_of<slice<uint16_t>>(data_len));
 
@@ -76,6 +83,8 @@ int main(int argc, char **argv) {
   auto o_num = ctx.logical_data(out_num);
 
   auto l_hist = ctx.logical_data(shape_of<slice<uint32_t>>(1024));
+
+  HuffmanCodecSTF codec_hf(data_len, pardeg, ctx);
 
   // ~~~~~~~~~~~~~~~~~~~~~~~ Tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
@@ -95,11 +104,18 @@ int main(int argc, char **argv) {
       kernel_hist_generic<<<hist_grid_d, hist_block_d, hist_shmem_use, s>>>(q_c, data_len, l_h, 1024, hist_repeat);
   };
 
-  //! Huffman Kernel
-  ctx.task(l_hist.read())->*[&](cudaStream_t s) {
-    cudaStreamSynchronize(stream); // synch stream to ensure data dependecy
+  //! Huffman Kernel CPU Buildbook
+  codec_hf.buildbook(l_hist, 1024, ctx);
 
-  };
+  //! Huffman Encode GPU Kernel
+  // ctx.task(quant_codes.rw())->*[&](cudaStream_t s, auto q_c) {
+    
+  // };
+
+  //! Finalize Compression
+  // ctx.host_launch()->*[&]() {
+    
+  // };
 
   //! Launch the tasks
   ctx.finalize();

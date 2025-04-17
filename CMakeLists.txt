@@ -216,6 +216,7 @@ set_source_files_properties(cudastf/cudastf_demo.cc PROPERTIES LANGUAGE CUDA)
 target_link_libraries(cudastf_demo 
   PRIVATE 
   fzmod_compile_settings
+  fzmod_cu_huffman
   CUDA::cudart
   CUDA::cuda_driver
   CCCL::CCCL 

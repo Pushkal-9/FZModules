@@ -101,7 +101,7 @@ struct HuffmanCodec<E>::impl {
 #else
 
   // build Huffman tree on CPU
-  void buildbook(uint32_t* freq, uint16_t const _rt_bklen, phf_stream_t stream)
+  void buildbook(const uint32_t* freq, uint16_t const _rt_bklen, phf_stream_t stream)
   {
     rt_bklen = _rt_bklen;
     // memcpy_allkinds<D2H>(h_hist.get(), freq, bklen);
@@ -232,7 +232,7 @@ PHF_TPL PHF_CLASS::HuffmanCodec(size_t const inlen, int const pardeg, bool debug
 PHF_TPL PHF_CLASS::~HuffmanCodec(){};
 
 // using CPU huffman
-PHF_TPL PHF_CLASS* PHF_CLASS::buildbook(uint32_t* freq, uint16_t const rt_bklen, phf_stream_t stream)
+PHF_TPL PHF_CLASS* PHF_CLASS::buildbook(const uint32_t* freq, uint16_t const rt_bklen, phf_stream_t stream)
 {
   pimpl->buildbook(freq, rt_bklen, stream);
   return this;
