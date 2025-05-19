@@ -152,8 +152,6 @@ struct Compressor {
     codec_hf = new CodecHF(conf->len, conf->pardeg);
     codec_fzg = new CodecFZG(conf->len);
 
-    // std::cout << "Compressor Created" << std::endl;
-
     // free header
     cudaFreeHost(header);
   }
@@ -247,8 +245,8 @@ struct Compressor {
     metrics->prediction_time = ms;
 
     // print num outliers
-    // std::cout << "Num Outliers: " << conf->splen << std::endl;
-    // std::cout << "Predictor Finished..." << std::endl;
+    std::cout << "Num Outliers: " << conf->splen << std::endl;
+    std::cout << "Predictor Finished..." << std::endl;
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~ Lossless Encoder 1 ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
@@ -322,17 +320,12 @@ struct Compressor {
     nbyte[ANCHOR] = conf->algo == ALGO::ALGO_SPLINE ? conf->anchor512_len * sizeof(float) : 0;
     nbyte[SPFMT] = conf->splen * (sizeof(uint32_t) + sizeof(float));
 
-    // std::cout << "Header Byte Info " << std::endl;
-    // std::cout << nbyte[HEADER] << " " << nbyte[ANCHOR] << " " << nbyte[ENCODED] << " " << nbyte[SPFMT] << std::endl;
+    printf("splen: %zu\n", conf->splen);
 
     uint32_t entry[END + 1];
     entry[0] = 0;
     for (auto i = 1; i < END + 1; i++) entry[i] = nbyte[i-1];
     for (auto i = 1; i < END + 1; i++) entry[i] += entry[i-1];
-
-    // std::cout << "Entry Info " << std::endl;
-    // for (auto i = 0; i < END + 1; i++) std::cout << entry[i] << " ";
-    // std::cout << std::endl;
 
     #define DST(FIELD, OFFSET) ((void*)(ibuffer->compressed() + entry[FIELD] + OFFSET))
 
@@ -346,9 +339,14 @@ struct Compressor {
 
     // output compression
     *compressed_out = ibuffer->compressed();
-    
+
     int END = sizeof(entry) / sizeof(entry[0]);
     conf->comp_size = entry[END - 1];
+    // print out compression size and entry
+    std::cout << "Compression Size: " << conf->comp_size << std::endl;
+    std::cout << "Entry Info: " << std::endl;
+    for (auto i = 0; i < END + 1; i++) std::cout << entry[i] << " ";
+    std::cout << std::endl;
 
     //end total time
     total_end = std::chrono::steady_clock::now();
@@ -508,6 +506,7 @@ struct Compressor {
 
     // printf("Decompression time: %f ms\n", ms);
 
+
     total_end = std::chrono::steady_clock::now();
     float total_time = std::chrono::duration<float, std::milli>(total_end - total_start).count();
     metrics->end_to_end_decomp_time = total_time;
@@ -569,11 +568,9 @@ struct Compressor {
   }
 
   void compare(T* decomp_data, T* orig_data, cudaStream_t stream) {
-    
     constexpr auto MINVAL = 0;
     constexpr auto MAXVAL = 1;
     constexpr auto AVGVAL = 2;
-    // constexpr auto RNG = 3;
 
     constexpr auto SUM_CORR = 0;
     constexpr auto SUM_ERR_SQ = 1;
@@ -623,7 +620,6 @@ struct Compressor {
     double bytes = 1.0 * sizeof(T) * conf->len;
     metrics->bitrate = 32.0 / (bytes / conf->comp_size);
     metrics->compression_ratio = (float)conf->orig_size / (float)conf->comp_size;
-
   }
 
   void print_metrics() {

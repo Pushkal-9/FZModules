@@ -155,6 +155,13 @@ struct HuffmanCodec<E>::impl {
 
     cudaStreamSynchronize((cudaStream_t) stream);
 
+    // move rebk4 (first 10 entries) to host and print
+    // uint32_t revbk4[10];
+    // cudaMemcpyAsync(revbk4, buf->d_revbk4.get(), 10 * sizeof(uint32_t), cudaMemcpyDeviceToHost, (cudaStream_t)stream);
+    // cudaStreamSynchronize((cudaStream_t) stream);
+    // printf("revbk4: [0]=%u [1]=%u [2]=%u [3]=%u [4]=%u [5]=%u\n",
+    //        revbk4[0], revbk4[1], revbk4[2], revbk4[3], revbk4[4], revbk4[5]);
+
     make_metadata();
     buf->memcpy_merge(header, stream);  // TODO externalize/make explicit
 
@@ -170,6 +177,9 @@ struct HuffmanCodec<E>::impl {
     *out = buf->d_encoded;
     *outlen = phf_encoded_bytes(&header);
   }
+
+
+
 
   void decode(uint8_t* in_encoded, E* out_decoded, phf_stream_t stream, bool header_on_device)
   {
@@ -193,6 +203,9 @@ struct HuffmanCodec<E>::impl {
 #undef PHF_ACCESSOR
   }
 
+
+  
+
   void make_metadata()
   {
     // header.self_bytes = sizeof(Header);
@@ -208,10 +221,18 @@ struct HuffmanCodec<E>::impl {
     nbyte[PHFHEADER_PAR_ENTRY] = buf->pardeg * sizeof(M);
     nbyte[PHFHEADER_BITSTREAM] = 4 * header.total_ncell;
 
+    printf("Total Ncell: %zu\n", header.total_ncell);
+    printf("total_nbit: %zu\n", header.total_nbit);
+
     header.entry[0] = 0;
     // *.END + 1: need to know the ending position
     for (auto i = 1; i < PHFHEADER_END + 1; i++) header.entry[i] = nbyte[i - 1];
     for (auto i = 1; i < PHFHEADER_END + 1; i++) header.entry[i] += header.entry[i - 1];
+
+    // print header entries
+    printf("HF CODEC - Header entries: [0]=%u [1]=%u [2]=%u [3]=%u [4]=%u [5]=%u\n",
+           header.entry[0], header.entry[1], header.entry[2], header.entry[3],
+           header.entry[4], header.entry[5]);
   }
 
   void clear_buffer() { buf->clear_buffer(); }

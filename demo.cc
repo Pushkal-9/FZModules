@@ -17,8 +17,8 @@ void compress_demo(std::string fname, size_t x, size_t y, size_t z) {
     
     // Setup config with compression options
     conf = new fz::Config(x, y, z);
-    conf->eb = 1e-4;
-    conf->eb_type = fz::EB_TYPE::EB_REL;
+    conf->eb = 2e-4;
+    conf->eb_type = fz::EB_TYPE::EB_ABS;
     conf->algo = fz::ALGO::ALGO_LORENZO;
     conf->precision = fz::PRECISION::PRECISION_FLOAT;
     conf->codec = fz::CODEC::CODEC_HUFFMAN;
@@ -84,8 +84,8 @@ void decompress_demo_file(std::string fname) {
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
-    std::string compressed_fname = fname + ".fzmod";
-    
+    std::string compressed_fname = fname + ".stf_compressed";
+
     // create decompressor object
     fz::Compressor<float> decompressor(compressed_fname);
 

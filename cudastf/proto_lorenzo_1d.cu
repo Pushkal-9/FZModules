@@ -1,11 +1,25 @@
+#pragma once
+
 #include <cuda_runtime.h>
 #include <cstddef>
 #include <stdexcept>
 
 using namespace cuda::experimental::stf;
 
+void lorenzo_optimizer(dim3& grid1D, dim3& block1D, size_t data_len) {
 
-__global__ void kernel_lorenzo_1d(slice<float> input,
+  auto divide_3 = [](dim3 len, dim3 sublen) {
+    return dim3(
+        (len.x - 1) / sublen.x + 1,
+        (len.y - 1) / sublen.y + 1,
+        (len.z - 1) / sublen.z + 1);
+  };
+
+  block1D = dim3(256, 1, 1);
+  grid1D = divide_3(dim3(data_len, 1, 1), block1D);
+}
+
+__global__ void kernel_proto_lorenzo_1d(slice<float> input,
                                   size_t input_size,
                                   slice<uint16_t> quant_codes,
                                   slice<float> outlier_vals,

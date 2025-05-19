@@ -99,12 +99,23 @@ PHF_MODULE_TPL void PHF_MODULE_CLASS::GPU_coarse_encode_phase3_sync(
       d_par_entry.buf, h_par_entry.buf, hfpar.pardeg * sizeof(M), cudaMemcpyHostToDevice,
       (cudaStream_t)stream));
   CHECK_GPU(cudaStreamSynchronize((cudaStream_t)stream));
+
+  // print outlen_nbit and outlen_ncell
+  if (outlen_nbit) printf("outlen_nbit: %zu\n", *outlen_nbit);
+  if (outlen_ncell) printf("outlen_ncell: %zu\n", *outlen_ncell);
 }
 
 PHF_MODULE_TPL void PHF_MODULE_CLASS::GPU_coarse_encode_phase4(
     phf::array<H> buf, phf::array<M> par_entry, phf::array<M> par_ncell, phf::par_config hfpar,
     phf::array<H> bitstream, void* stream)
 {
+  // print par_entry(1) (copy from device)
+  uint32_t par_entry_1;
+  CHECK_GPU(cudaMemcpyAsync(
+      &par_entry_1, par_entry.buf + 1, sizeof(uint32_t), cudaMemcpyDeviceToHost,
+      (cudaStream_t)stream));
+  CHECK_GPU(cudaStreamSynchronize((cudaStream_t)stream));
+
   phf::KERNEL_CUHIP_encode_phase4_concatenate<H, M>
       <<<hfpar.pardeg, 128, 0, (cudaStream_t)stream>>>  //
       (buf.buf, par_entry.buf, par_ncell.buf, hfpar.sublen, bitstream.buf);

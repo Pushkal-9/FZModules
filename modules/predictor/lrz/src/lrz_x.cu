@@ -392,10 +392,8 @@ int GPU_x_lorenzo_nd(
   auto d = lorenzo_utils::ndim(data_len3);
 
   if (d == 1)
-    fz::KERNEL_CUHIP_x_lorenzo_1d1l<
-        T, x_lorenzo<1>::tile.x, x_lorenzo<1>::sequentiality.x, UseZigZag, Eq>
-        <<<x_lorenzo<1>::thread_grid(data_len3), x_lorenzo<1>::thread_block, 0,
-           (cudaStream_t)stream>>>(
+    fz::KERNEL_CUHIP_x_lorenzo_1d1l<T, x_lorenzo<1>::tile.x, x_lorenzo<1>::sequentiality.x, UseZigZag, Eq>
+        <<<x_lorenzo<1>::thread_grid(data_len3), x_lorenzo<1>::thread_block, 0, (cudaStream_t)stream>>>(
             in_eq, in_outlier, out_data, data_len3, data_leap3, radius, (T)ebx2);
   else if (d == 2) {
     // psz::KERNEL_CUHIP_x_lorenzo_2d1l<T, UseZigZag, Eq>
