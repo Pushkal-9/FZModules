@@ -85,7 +85,8 @@ void decompress_demo_file(std::string fname) {
     cudaStreamCreate(&stream);
 
     std::string compressed_fname = fname + ".stf_compressed";
-
+    // std::string compressed_fname = fname + ".fzmod";
+    
     // create decompressor object
     fz::Compressor<float> decompressor(compressed_fname);
 

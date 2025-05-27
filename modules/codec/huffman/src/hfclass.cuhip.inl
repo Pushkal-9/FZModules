@@ -107,6 +107,9 @@ struct HuffmanCodec<E>::impl {
     // memcpy_allkinds<D2H>(h_hist.get(), freq, bklen);
     cudaMemcpy(h_hist.get(), freq, rt_bklen * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 
+    // printf("rtbklen: %u\n", rt_bklen);
+    // printf("revbk4_bytes: %lu\n", buf->revbk4_bytes);
+
     phf_CPU_build_canonized_codebook_v2<E, H4>(
         h_hist.get(), rt_bklen, buf->h_bk4.get(), buf->h_revbk4.get(), buf->revbk4_bytes,
         &_time_book);
@@ -117,6 +120,8 @@ struct HuffmanCodec<E>::impl {
     cudaMemcpyAsync(buf->d_bk4.get(), buf->h_bk4.get(), rt_bklen * sizeof(H4), cudaMemcpyHostToDevice, (cudaStream_t)stream);
 
     cudaMemcpyAsync(buf->d_revbk4.get(), buf->h_revbk4.get(), buf->revbk4_bytes, cudaMemcpyHostToDevice, (cudaStream_t)stream);
+
+    cudaStreamSynchronize((cudaStream_t)stream);
   }
 #endif
 
@@ -220,9 +225,6 @@ struct HuffmanCodec<E>::impl {
     nbyte[PHFHEADER_PAR_NBIT] = buf->pardeg * sizeof(M);
     nbyte[PHFHEADER_PAR_ENTRY] = buf->pardeg * sizeof(M);
     nbyte[PHFHEADER_BITSTREAM] = 4 * header.total_ncell;
-
-    printf("Total Ncell: %zu\n", header.total_ncell);
-    printf("total_nbit: %zu\n", header.total_nbit);
 
     header.entry[0] = 0;
     // *.END + 1: need to know the ending position

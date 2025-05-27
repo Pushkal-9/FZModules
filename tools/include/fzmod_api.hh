@@ -146,7 +146,6 @@ struct Compressor {
     // std::cout << "x, y, z: " << x << " " << y << " " << z << std::endl;
     // std::cout << "compsize " << conf->comp_size << std::endl;
 
-
     ibuffer = new InternalBuffer<T>(conf, conf->x, conf->y, conf->z, false);
 
     codec_hf = new CodecHF(conf->len, conf->pardeg);
@@ -240,13 +239,19 @@ struct Compressor {
     // make outlier seen on host
     conf->splen = ibuffer->compact->num_outliers();
 
+    // print the first 100 quant codes
+    // auto q_codes_h = MAKE_UNIQUE_HOST(uint16_t, conf->len);
+    // cudaMemcpy(q_codes_h.get(), ibuffer->ectrl(), conf->len * sizeof(uint16_t), cudaMemcpyDeviceToHost);
+    // // printf("Quantization Codes:\n");
+    // for (int i = 0; i < conf->len; i++) {
+    //   // if (q_codes_h.get()[i] > 900 && q_codes_h.get()[i] != 0)
+    //   printf("%u ", q_codes_h.get()[i]);
+    // }
+    // printf("\n");
+
     STOP_CPU_TIMER;
     TIME_ELAPSED_CPU_TIMER(ms);
     metrics->prediction_time = ms;
-
-    // print num outliers
-    std::cout << "Num Outliers: " << conf->splen << std::endl;
-    std::cout << "Predictor Finished..." << std::endl;
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~ Lossless Encoder 1 ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
@@ -320,8 +325,6 @@ struct Compressor {
     nbyte[ANCHOR] = conf->algo == ALGO::ALGO_SPLINE ? conf->anchor512_len * sizeof(float) : 0;
     nbyte[SPFMT] = conf->splen * (sizeof(uint32_t) + sizeof(float));
 
-    printf("splen: %zu\n", conf->splen);
-
     uint32_t entry[END + 1];
     entry[0] = 0;
     for (auto i = 1; i < END + 1; i++) entry[i] = nbyte[i-1];
@@ -339,6 +342,14 @@ struct Compressor {
 
     // output compression
     *compressed_out = ibuffer->compressed();
+
+    // move outliers to host and print them
+    if (conf->splen != 0) {
+      auto outlier_vals_h = MAKE_UNIQUE_HOST(float, conf->splen);
+      auto outlier_idx_h = MAKE_UNIQUE_HOST(uint32_t, conf->splen);
+      cudaMemcpy(outlier_vals_h.get(), ibuffer->compact_val(), conf->splen * sizeof(float), cudaMemcpyDeviceToHost);
+      cudaMemcpy(outlier_idx_h.get(), ibuffer->compact_idx(), conf->splen * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+    }
 
     int END = sizeof(entry) / sizeof(entry[0]);
     conf->comp_size = entry[END - 1];
@@ -517,7 +528,15 @@ struct Compressor {
       auto decompressed_fname = conf->fname + ".fzmodx";
       auto decompressed_file_data_host = MAKE_UNIQUE_HOST(T, conf->len);
       cudaMemcpy(decompressed_file_data_host.get(), d_xdata, conf->orig_size, cudaMemcpyDeviceToHost);
-      utils::tofile(decompressed_fname.c_str(), decompressed_file_data_host.get(), conf->orig_size);
+
+      // // print first 10 values of decompressed data
+      // printf("Decompressed Data (first 10 values):\n");
+      // for (size_t i = 0; i < 100 && i < conf->len; ++i) {
+      //   printf("%f ", decompressed_file_data_host.get()[i]);
+      // }
+      // printf("\n");
+
+      utils::tofile(decompressed_fname.c_str(), decompressed_file_data_host.get(), conf->len);
       // std::cout << "Decompressed file written to: " << decompressed_fname << std::endl;
 
       STOP_CPU_TIMER;

@@ -13,6 +13,7 @@
 // #include "busyheader.hh"
 // #include "type.h"
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
@@ -193,8 +194,9 @@ void phf_CPU_build_codebook_v1(uint32_t* ext_freq, uint16_t booklen, H* book)
   auto tree = create_tree_serial(state_num);
 
   {  // real "kernel"
-    for (size_t i = 0; i < tree->all_nodes; i++)
+    for (size_t i = 0; i < tree->all_nodes; i++) {
       if (freq[i]) qinsert(tree, new_node(tree, freq[i], i, 0, 0));
+    }
     while (tree->qend > 2) qinsert(tree, new_node(tree, 0, 0, qremove(tree), qremove(tree)));
     phf_stack<node_t, sizeof(H)>::template inorder_traverse<H>(tree->qq[1], book);
   }

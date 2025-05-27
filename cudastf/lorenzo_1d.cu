@@ -80,7 +80,7 @@ __global__ void kernel_lorenzo_1d(
 
   #pragma unroll
   for (auto ix = 0; ix < Seq; ix++) {
-    auto delta = thp_data(ix) - thp_data(ix - 1);
+    float delta = thp_data(ix) - thp_data(ix - 1);
     bool quantizable = fabs(delta) < radius;
 
     if constexpr(UseLocalStat) {
@@ -93,15 +93,18 @@ __global__ void kernel_lorenzo_1d(
     s_eq_uint[threadIdx.x * Seq + ix] = quantizable * (uint16_t)candidate;
 
     if (not quantizable) {
-      auto cur_idx = atomicAdd(outlier_num.data_handle(), 1);
-      outlier_idxs(cur_idx) = id_base + threadIdx.x * Seq + ix;
-      outlier_vals(cur_idx) = candidate;
+      auto global_idx = id_base + threadIdx.x * Seq + ix;
+      if (global_idx < input_size) {  // Add this check
+        auto cur_idx = atomicAdd(outlier_num.data_handle(), 1);
+        outlier_idxs(cur_idx) = global_idx;
+        outlier_vals(cur_idx) = candidate;
+      }
     }
   }
   __syncthreads();
 
   if constexpr(UseLocalStat) {
-    if (threadIdx.x % 32 == 0) atomicAdd(s_top1_counts, s_top1_counts[0]);
+    if (threadIdx.x % 32 == 0) atomicAdd(s_top1_counts, thp_top1_count);
     __syncthreads();
 
     if constexpr(UseGlobalStat) {
@@ -190,7 +193,7 @@ void lorenzo_1d(
     cudaStream_t stream) 
 {
   kernel_lorenzo_1d<c_lorenzo<1>::tile.x, c_lorenzo<1>::sequentiality.x>
-      <<<c_lorenzo<1>::thread_grid(input_size), c_lorenzo<1>::thread_block, 0, stream>>>(input, input_size, quant_codes, outlier_vals, outlier_idxs, outlier_num, out_top1, ebx2, ebx2_r, radius);
+      <<<c_lorenzo<1>::thread_grid(input_size), c_lorenzo<1>::thread_block, 0, stream>>>(input, input_size, quant_codes, outlier_vals, outlier_idxs, outlier_num, out_top1, ebx2, (float)ebx2_r, radius);
 }
 
 void lorenzo_decomp_1d(
