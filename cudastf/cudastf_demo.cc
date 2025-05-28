@@ -14,8 +14,6 @@
 #include "lorenzo_1d.cu"
 #include "spvn_stf.cu"
 
-//? can I freeze data after prediction (outliers/quant codes) and then call another task?
-
 namespace utils = _portable::utils;
 using namespace cuda::experimental::stf;
 
@@ -50,6 +48,8 @@ struct FZModPerformance {
   std::vector<double> comp_time;
   std::vector<double> communication_time;
 };
+
+// ~~~~~~~~~~~~~~~~~~~~~~~ Compress ~~~~~~~~~~~~~~~~~~~~~~~ //
 
 void compress(std::string fname, size_t len1, size_t len2, size_t len3) {
 
