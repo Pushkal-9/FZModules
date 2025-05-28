@@ -151,28 +151,11 @@ void compress(std::string fname, size_t len1, size_t len2, size_t len3) {
   //! Huffman Encode GPU Kernel
   codec_hf.encode(pardeg, ibuffer, ctx, stream);
 
-  //! Wipe and reuse hf_header_entry for primary header
-  ctx.task(
-    ibuffer.hf_header_entry.write(), 
-    ibuffer.out_entries.write())
-    .set_symbol("header_setup")->*[&]
-    (cudaStream_t s, 
-     auto hf_h_entry, 
-     auto entry)
-  {
-    cuda_safe_call(
-      cudaMemsetAsync(hf_h_entry.data_handle(), 0, 6 * sizeof(uint32_t), s));
-    cuda_safe_call(
-      cudaMemsetAsync(entry.data_handle(), 0, 5 * sizeof(uint32_t), s));
-  };
-
   //! fill in the entry array for data segments using prefix sum
   ctx.host_launch(
-    ibuffer.out_entries.write(), 
     ibuffer.l_out_num.read())
     .set_symbol("h_entries_fill")->*[&]
-    (auto entry, 
-     auto out_num) 
+    (auto out_num) 
   {
     num_outliers = out_num(0);
     h_nbyte[HEADER] = 128;
@@ -187,6 +170,8 @@ void compress(std::string fname, size_t len1, size_t len2, size_t len3) {
     int END = sizeof(h_entries) / sizeof(h_entries[0]);
     compressed_len = h_entries[END - 1];
   };
+
+  cuda_safe_call(cudaStreamSynchronize(ctx.task_fence()));
 
   //! concat data on device
   ctx.task(
@@ -212,8 +197,12 @@ void compress(std::string fname, size_t len1, size_t len2, size_t len3) {
         cudaMemcpyDeviceToDevice, s));
   };
 
+  cuda_safe_call(cudaStreamSynchronize(ctx.task_fence()));
+
   // create memory to store compressed data for file output
   auto file = MAKE_UNIQUE_HOST(uint8_t, compressed_len);
+
+  cuda_safe_call(cudaStreamSynchronize(ctx.task_fence()));
 
   //! copy header to compressed buffer
   ctx.task(
@@ -226,6 +215,8 @@ void compress(std::string fname, size_t len1, size_t len2, size_t len3) {
       cudaMemcpy(file.get(), compressed.data_handle(), compressed_len,
         cudaMemcpyDeviceToHost));
   };
+
+  cuda_safe_call(cudaStreamSynchronize(ctx.task_fence()));
 
   //! Output Data To File
   ctx.host_launch().set_symbol("file_header_and_output")->*[&]() 
@@ -460,6 +451,8 @@ void decompress(std::string fname, size_t len1, size_t len2, size_t len3) {
       &header_hf, encoded.data_handle(), 
       sizeof(hf_header), cudaMemcpyDeviceToHost, s));
   };
+
+  cuda_safe_call(cudaStreamSynchronize(ctx.task_fence()));
 
   //! scatter outliers to uncompressed buffer
   ctx.task(
