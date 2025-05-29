@@ -57,6 +57,7 @@ target_compile_options(
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--extended-lambda>
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--expt-relaxed-constexpr>
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Wno-deprecated-declarations>
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-lineinfo>
 )
 target_compile_features(fzmod_compile_settings INTERFACE cxx_std_17 cuda_std_17)
 target_link_libraries(fzmod_compile_settings INTERFACE CUDA::cudart)
