@@ -134,8 +134,7 @@ struct HuffmanCodec<E>::impl {
     // memcpy_allkinds<D2H>(h_hist.get(), freq, bklen);
     cudaMemcpy(h_hist.get(), freq, rt_bklen * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 
-    // printf("rtbklen: %u\n", rt_bklen);
-    // printf("revbk4_bytes: %lu\n", buf->revbk4_bytes);
+
 
     phf_CPU_build_canonized_codebook_v2<E, H4>(
         h_hist.get(), rt_bklen, buf->h_bk4.get(), buf->h_revbk4.get(),

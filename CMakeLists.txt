@@ -1,6 +1,26 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+project(FZModules LANGUAGES CUDA CXX C VERSION 1.0)
 
-# Check if running WSL
+########################
+### GENERAL SETTINGS ###
+########################
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(BUILD_SHARED_LIBS "prefer shared libaries" ON)
+include(GNUInstallDirs)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+set(FZMOD_BACKEND "CUDA" CACHE STRING "Select the backend for the FZ Compression Modules library")
+
+find_package(CUDAToolkit REQUIRED)
+enable_language(CUDA)
+
+#####################
+### WSL DETECTION ###
+#####################
+
 execute_process(
   COMMAND systemd-detect-virt
   OUTPUT_VARIABLE VIRT_ENV
@@ -9,7 +29,6 @@ execute_process(
   RESULT_VARIABLE DETECT_RESULT
 )
 
-# add correct library path for WSL if needed
 if(DETECT_RESULT EQUAL 0 AND VIRT_ENV STREQUAL "wsl")
   message(STATUS "Running on WSL")
   set(IS_WSL TRUE)
@@ -18,10 +37,10 @@ else()
   set(IS_WSL FALSE)
 endif()
 
-# Set the project name and version
-project(FZModules LANGUAGES CUDA CXX C VERSION 1.0)
+############################
+### BUILD CONFIGURATIONS ###
+############################
 
-# set build type
 set(default_build_type "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to '${default_build_type}'")
@@ -31,8 +50,7 @@ endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
-set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -t 0")
 set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -t 0")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -48,22 +66,22 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --Werror=all-warnings")
 endif()
 
-option(BUILD_CUDASTF "Build the CUDASTF API" OFF)
+#############################
+### TESTING CONFIGURATION ###
+#############################
 
-# add install directories
-include(GNUInstallDirs)
-
-# Testing coverage option
 option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
 if(ENABLE_COVERAGE)
   message(STATUS "Compiling with coverage flags")
   add_compile_options(--coverage -O0 -g)
   add_link_options(--coverage)
-  # Include GoogleTest
   add_subdirectory(third_party/googletest)
-  # Add modularized test suite
   add_subdirectory(tests)
 endif()
+
+################################
+### SANITIZERS CONFIGURATION ###
+################################
 
 # Add sanitizers option
 if(NOT USE_SANITIZER)
@@ -87,41 +105,10 @@ elseif (USE_SANITIZER STREQUAL "Memory")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=memory")
 endif()
 
-# Specify the C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+#########################
+### COMPILER SETTINGS ###
+#########################
 
-# general cmake setup
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-option(BUILD_SHARED_LIBS "prefer shared libaries" ON)
-
-# Set the default backend for FZ Compression Modules
-set(FZMOD_BACKEND "CUDA" CACHE STRING "Select the backend for the FZ Compression Modules library")
-
-# define backend variables
-if(FZMOD_BACKEND STREQUAL "CUDA")
-  add_compile_definitions(FZMOD_USE_CUDA)
-  add_compile_definitions(_PORTABLE_USE_CUDA)
-endif()
-
-# Find CUDA
-find_package(CUDAToolkit REQUIRED)
-enable_language(CUDA)
-
-if(BUILD_CUDASTF)
-  # Add CPM.cmake for fetching CCCL
-  include(cmake/CPM.cmake)
-
-  # Add CCCL package for CUDASTF support
-  CPMAddPackage(
-    NAME CCCL
-    GITHUB_REPOSITORY "nvidia/cccl"
-    GIT_TAG "main"
-    OPTIONS "CCCL_ENABLE_UNSTABLE ON"
-  )
-endif()
-
-# Compile settings interface
 add_library(fzmod_compile_settings INTERFACE)
 target_compile_options(
   fzmod_compile_settings 
@@ -134,7 +121,10 @@ target_compile_options(
 target_compile_features(fzmod_compile_settings INTERFACE cxx_std_17 cuda_std_17)
 target_link_libraries(fzmod_compile_settings INTERFACE CUDA::cudart)
 
-# include directories
+###########################
+### INCLUDE DIRECTORIES ###
+###########################
+
 target_include_directories(fzmod_compile_settings INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tools/include/>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tools/src/>
@@ -167,9 +157,11 @@ target_include_directories(fzmod_compile_settings INTERFACE
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# LIBRARIES
+#################
+### LIBRARIES ###
+#################
 
-# FZ utils
+#### FZ utils
 add_library(fz_utils
   modules/stat/extrema/src/extrema.cu
   modules/stat/spvn/src/spvn.cu
@@ -181,10 +173,8 @@ target_link_libraries(fz_utils
   fzmod_compile_settings
   CUDA::cudart
 )
-
-# Individiual Modules
-
-## FZG Codec Module
+####
+#### FZG Codec Module
 add_library(fzmod_cu_fzg
   modules/codec/fzg/src/fzg_kernel.cu
   modules/codec/fzg/src/fzg_class.cc
@@ -195,8 +185,8 @@ target_link_libraries(fzmod_cu_fzg
 )
 add_library(FZMOD::CUDA::fzg ALIAS fzmod_cu_fzg)
 add_library(FZMOD::fzg ALIAS fzmod_cu_fzg)
-
-## Histogram Module
+####
+#### Histogram Module
 add_library(fzmod_cu_histogram
   modules/stat/histogram/src/hist_generic_seq.cc
   modules/stat/histogram/src/hist_generic.cu
@@ -210,11 +200,10 @@ target_link_libraries(fzmod_cu_histogram
 )
 add_library(FZMOD::CUDA::histogram ALIAS fzmod_cu_histogram)
 add_library(FZMOD::histogram ALIAS fzmod_cu_histogram)
-
-## Huffman Module
+####
+#### Huffman Module
 add_library(fzmod_cu_huffman
   modules/codec/huffman/src/hfclass.cc
-  # modules/codec/huffman/src/hf_est.cc
   modules/codec/huffman/src/hfbk_impl1.seq.cc
   modules/codec/huffman/src/hfbk_impl2.seq.cc
   modules/codec/huffman/src/hfbk_internal.seq.cc
@@ -230,8 +219,8 @@ target_link_libraries(fzmod_cu_huffman
 )
 add_library(FZMOD::CUDA::huffman ALIAS fzmod_cu_huffman)
 add_library(FZMOD::huffman ALIAS fzmod_cu_huffman)
-
-# Lorenzo Module
+####
+#### Lorenzo Module
 add_library(fzmod_cu_lrz
   modules/predictor/lrz/src/lrz_c.cu
   modules/predictor/lrz/src/lrz_x.cu
@@ -243,8 +232,8 @@ target_link_libraries(fzmod_cu_lrz
 )
 add_library(FZMOD::CUDA::lrz ALIAS fzmod_cu_lrz)
 add_library(FZMOD::lrz ALIAS fzmod_cu_lrz)
-
-## Spline Module
+####
+#### Spline Module
 add_library(fzmod_cu_spline
   modules/predictor/spline/src/spline3.cu
 )
@@ -255,11 +244,10 @@ target_link_libraries(fzmod_cu_spline
 )
 add_library(FZMOD::CUDA::spline ALIAS fzmod_cu_spline)
 add_library(FZMOD::spline ALIAS fzmod_cu_spline)
-
-# combine all modules into a single library
+####
+#### Combine Modules
 add_library(fzmod
-  demo.cc
-  # pipeline/src/libfzmod.cc
+  examples/demo.cc
 )
 target_link_libraries(fzmod
   PUBLIC
@@ -274,16 +262,34 @@ target_link_libraries(fzmod
 )
 add_library(FZMOD::CUDA ALIAS fzmod)
 add_library(FZMOD::all ALIAS fzmod)
+####
 
-############################
+###################
+### EXECUTABLES ###
+###################
 
-# export binary fzmod
-add_executable(fzmod-bin demo.cc)
-set_source_files_properties(demo.cc PROPERTIES LANGUAGE CUDA)
+add_executable(fzmod-bin examples/demo.cc)
+set_source_files_properties(examples/demo.cc PROPERTIES LANGUAGE CUDA)
 target_link_libraries(fzmod-bin PRIVATE fzmod)
 set_target_properties(fzmod-bin PROPERTIES OUTPUT_NAME fzmod)
 
+#############################
+### CUDASTF CONFIGURATION ###
+#############################
+
+option(BUILD_CUDASTF "Build the CUDASTF API" OFF)
 if(BUILD_CUDASTF)
+  # Add CPM.cmake for fetching CCCL
+  include(cmake/CPM.cmake)
+
+  # Add CCCL package for CUDASTF support
+  CPMAddPackage(
+    NAME CCCL
+    GITHUB_REPOSITORY "nvidia/cccl"
+    GIT_TAG "main"
+    OPTIONS "CCCL_ENABLE_UNSTABLE ON"
+  )
+
   # CUDASTF demo executable
   add_executable(cudastf_demo cudastf/cudastf_demo.cc)
   set_source_files_properties(cudastf/cudastf_demo.cc PROPERTIES LANGUAGE CUDA)
@@ -297,11 +303,17 @@ if(BUILD_CUDASTF)
     CCCL::CCCL 
     CCCL::cudax
   )
+
+  # install executable
+  install(TARGETS cudastf_demo
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
 endif()
 
-## INSTALLATION
+####################
+### INSTALLATION ###
+####################
 
-# install libs
 install(TARGETS fzmod_compile_settings EXPORT FZModulesTargets)
 install(TARGETS 
   fz_utils
@@ -318,19 +330,10 @@ install(TARGETS
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# install executable
 install(TARGETS fzmod-bin
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-if(BUILD_CUDASTF)
-  # install executable
-  install(TARGETS cudastf_demo
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  )
-endif()
-
-# install the package
 install(
   EXPORT FZModulesTargets
   NAMESPACE FZMOD::
@@ -356,7 +359,6 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/FZModules
 )
 
-# install headers
 install(DIRECTORY
   tools/include/
   modules/codec/fzg/include/
