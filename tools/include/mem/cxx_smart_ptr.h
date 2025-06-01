@@ -8,7 +8,7 @@
 #include <memory>
 
 template <typename T>
-T* malloc_device(size_t const len, void* stream = nullptr) {
+T* malloc_device(size_t const len) {
   T* __a;
   cudaMalloc(&__a, len * sizeof(T));
   cudaMemset(__a, 0, len * sizeof(T));
@@ -16,7 +16,7 @@ T* malloc_device(size_t const len, void* stream = nullptr) {
 }
 
 template <typename T>
-T* malloc_host(size_t const len, void* stream = nullptr) {
+T* malloc_host(size_t const len) {
   T* __a;
   cudaMallocHost(&__a, len * sizeof(T));
   memset(__a, 0, len * sizeof(T));
@@ -24,7 +24,7 @@ T* malloc_host(size_t const len, void* stream = nullptr) {
 }
 
 template <typename T>
-T* malloc_unified(size_t const len, void* stream = nullptr) {
+T* malloc_unified(size_t const len) {
   T* __a;
   cudaMallocManaged(&__a, len * sizeof(T));
   return __a;

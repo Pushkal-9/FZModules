@@ -17,7 +17,7 @@ template <typename E, typename H = uint32_t>
 
 template <typename E, typename H = uint32_t>
 void phf_CPU_build_canonized_codebook_v2(
-    uint32_t* freq, int const bklen, uint32_t* bk4, uint8_t* revbook, int const revbook_bytes,
+    uint32_t* freq, int const bklen, uint32_t* bk4, uint8_t* revbook,
     float* time);
 
 #endif /* PHF_HFBK_HH */

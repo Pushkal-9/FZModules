@@ -1,14 +1,60 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
-# needed for WSL cuda
-link_directories(/usr/lib/wsl/lib)
+# Check if running WSL
+execute_process(
+  COMMAND systemd-detect-virt
+  OUTPUT_VARIABLE VIRT_ENV
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+  RESULT_VARIABLE DETECT_RESULT
+)
 
-project(FZModules LANGUAGES CUDA CXX C VERSION 0.1)
+# add correct library path for WSL if needed
+if(DETECT_RESULT EQUAL 0 AND VIRT_ENV STREQUAL "wsl")
+  message(STATUS "Running on WSL")
+  set(IS_WSL TRUE)
+  link_directories(/usr/lib/wsl/lib)
+else()
+  set(IS_WSL FALSE)
+endif()
 
+# Set the project name and version
+project(FZModules LANGUAGES CUDA CXX C VERSION 1.0)
+
+# set build type
+set(default_build_type "Release")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}'")
+  set(CMAKE_BUILD_TYPE ${default_build_type} CACHE
+      STRING "Choose the type to build." FORCE)
+endif()
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
+set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g")
+set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -t 0")
+set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -t 0")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wextra")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wpedantic")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --Werror=all-warnings")
+endif()
+
+option(BUILD_CUDASTF "Build the CUDASTF API" OFF)
+
+# add install directories
 include(GNUInstallDirs)
 
+# Testing coverage option
 option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
-
 if(ENABLE_COVERAGE)
   message(STATUS "Compiling with coverage flags")
   add_compile_options(--coverage -O0 -g)
@@ -19,6 +65,28 @@ if(ENABLE_COVERAGE)
   add_subdirectory(tests)
 endif()
 
+# Add sanitizers option
+if(NOT USE_SANITIZER)
+  set(USE_SANITIZER "" CACHE STRING "use a build sanitizer" FORCE)
+endif()
+set_property(CACHE USE_SANITIZER PROPERTY STRINGS "" "Address" "Thread" "Undefined" "Leak" "Memory")
+if (USE_SANITIZER STREQUAL "Address")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+elseif (USE_SANITIZER STREQUAL "Thread")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
+elseif (USE_SANITIZER STREQUAL "Undefined")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+elseif (USE_SANITIZER STREQUAL "Leak")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak")
+elseif (USE_SANITIZER STREQUAL "Memory")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=memory")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=memory")
+endif()
+
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -27,27 +95,31 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(BUILD_SHARED_LIBS "prefer shared libaries" ON)
 
+# Set the default backend for FZ Compression Modules
 set(FZMOD_BACKEND "CUDA" CACHE STRING "Select the backend for the FZ Compression Modules library")
 
-# define PSZ_USE_CUDA
+# define backend variables
 if(FZMOD_BACKEND STREQUAL "CUDA")
   add_compile_definitions(FZMOD_USE_CUDA)
   add_compile_definitions(_PORTABLE_USE_CUDA)
 endif()
 
+# Find CUDA
 find_package(CUDAToolkit REQUIRED)
 enable_language(CUDA)
 
-# Add CPM.cmake for fetching CCCL
-include(cmake/CPM.cmake)
+if(BUILD_CUDASTF)
+  # Add CPM.cmake for fetching CCCL
+  include(cmake/CPM.cmake)
 
-# Add CCCL package for CUDASTF support
-CPMAddPackage(
-  NAME CCCL
-  GITHUB_REPOSITORY "nvidia/cccl"
-  GIT_TAG "main"
-  OPTIONS "CCCL_ENABLE_UNSTABLE ON"
-)
+  # Add CCCL package for CUDASTF support
+  CPMAddPackage(
+    NAME CCCL
+    GITHUB_REPOSITORY "nvidia/cccl"
+    GIT_TAG "main"
+    OPTIONS "CCCL_ENABLE_UNSTABLE ON"
+  )
+endif()
 
 # Compile settings interface
 add_library(fzmod_compile_settings INTERFACE)
@@ -211,19 +283,21 @@ set_source_files_properties(demo.cc PROPERTIES LANGUAGE CUDA)
 target_link_libraries(fzmod-bin PRIVATE fzmod)
 set_target_properties(fzmod-bin PROPERTIES OUTPUT_NAME fzmod)
 
-# CUDASTF demo executable
-add_executable(cudastf_demo cudastf/cudastf_demo.cc)
-set_source_files_properties(cudastf/cudastf_demo.cc PROPERTIES LANGUAGE CUDA)
-target_link_libraries(cudastf_demo 
-  PRIVATE 
-  fzmod_compile_settings
-  fz_utils
-  fzmod_cu_huffman
-  CUDA::cudart
-  CUDA::cuda_driver
-  CCCL::CCCL 
-  CCCL::cudax
-)
+if(BUILD_CUDASTF)
+  # CUDASTF demo executable
+  add_executable(cudastf_demo cudastf/cudastf_demo.cc)
+  set_source_files_properties(cudastf/cudastf_demo.cc PROPERTIES LANGUAGE CUDA)
+  target_link_libraries(cudastf_demo 
+    PRIVATE 
+    fzmod_compile_settings
+    fz_utils
+    fzmod_cu_huffman
+    CUDA::cudart
+    CUDA::cuda_driver
+    CCCL::CCCL 
+    CCCL::cudax
+  )
+endif()
 
 ## INSTALLATION
 
@@ -249,10 +323,12 @@ install(TARGETS fzmod-bin
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# install executable
-install(TARGETS fzmod-bin cudastf_demo
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+if(BUILD_CUDASTF)
+  # install executable
+  install(TARGETS cudastf_demo
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+endif()
 
 # install the package
 install(

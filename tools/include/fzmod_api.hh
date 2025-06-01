@@ -486,7 +486,12 @@ struct Compressor {
     if (conf->codec == CODEC::CODEC_HUFFMAN) {
       codec_hf->decode((uint8_t*)access(ENCODED), ibuffer->ectrl(), stream);
     } else if (conf->codec == CODEC::CODEC_FZG) {
-      codec_fzg->decode((uint8_t*)access(ENCODED), conf->comp_size, ibuffer->ectrl(), conf->len, stream);
+      codec_fzg->decode(
+        (uint8_t*)access(ENCODED), 
+        ibuffer->ectrl(), 
+        conf->len, 
+        stream
+      );
     }
 
     STOP_CPU_TIMER;

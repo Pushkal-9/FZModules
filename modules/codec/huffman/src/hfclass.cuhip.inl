@@ -67,12 +67,39 @@ struct HuffmanCodec<E>::impl {
 
   Buf* buf;
 
-  impl() = default;
+  impl() 
+    : header(),  // Initialize header
+      // Initialize the timepoints
+      f(),
+      e(),
+      d(),
+      c(),
+      b(),
+      a(),
+      _time_book(0.0f), 
+      _time_lossless(0.0f),
+      event_start(nullptr),  // Initialize CUDA event pointers
+      event_end(nullptr),
+      pardeg(0),
+      sublen(0),
+      numSMs(0),
+      len(0),
+      rt_bklen(0),
+      h_hist(nullptr),  // Initialize unique pointers
+      buf(nullptr)
+  {}
+
   ~impl()
   {
     delete buf;
     event_destroy_pair(event_start, event_end);
   }
+
+  impl(const impl&) = delete;
+  impl& operator=(const impl&) = delete;
+
+  impl(impl&&) noexcept = delete;
+  impl& operator=(impl&&) noexcept = delete;
 
   // keep ctor short
   void init(size_t const inlen, int const _pardeg, bool debug)
@@ -111,7 +138,7 @@ struct HuffmanCodec<E>::impl {
     // printf("revbk4_bytes: %lu\n", buf->revbk4_bytes);
 
     phf_CPU_build_canonized_codebook_v2<E, H4>(
-        h_hist.get(), rt_bklen, buf->h_bk4.get(), buf->h_revbk4.get(), buf->revbk4_bytes,
+        h_hist.get(), rt_bklen, buf->h_bk4.get(), buf->h_revbk4.get(),
         &_time_book);
 
     // memcpy_allkinds_async<H2D>(buf->d_bk4.get(), buf->h_bk4.get(), rt_bklen, (cudaStream_t)stream);
