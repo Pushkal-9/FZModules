@@ -11,7 +11,6 @@ struct stf_internal_buffers {
   stf_internal_buffers(context& ctx, size_t len, float* input_data, size_t revbk4_bytes, size_t bk_bytes, int pardeg, bool comp = true) {
     if (comp) {
       l_uncomp = ctx.logical_data(input_data, {len}).set_symbol("l_uncomp"); 
-      // l_uncomp = ctx.logical_data(shape_of<slice<float>>(len)).set_symbol("l_uncomp"); debugging version for testing to not use wrapped logical data
       l_compressed = ctx.logical_data(shape_of<slice<uint8_t>>(len * 4 / 2)).set_symbol("l_compressed");
       l_q_codes =   ctx.logical_data(shape_of<slice<uint16_t>>(len)).set_symbol("l_q_codes");
       l_top1 =      ctx.logical_data(shape_of<slice<uint32_t>>(1)).set_symbol("l_top1");

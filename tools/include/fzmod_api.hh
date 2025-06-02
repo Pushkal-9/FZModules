@@ -160,6 +160,7 @@ struct Compressor {
     if (codec_hf) delete codec_hf;
     if (codec_fzg) delete codec_fzg;
     delete ibuffer;
+    if (metrics) delete metrics;
     // std::cout << "Compressor Destroyed" << std::endl;
   }
 
@@ -454,6 +455,8 @@ struct Compressor {
     CREATE_CPU_TIMER;
     START_CPU_TIMER;
 
+    cudaMemsetAsync(out_data, 0, conf->orig_size, stream);
+
     auto access = [&](int FIELD, size_t offset_nbyte = 0) {
       return (void*)(in_data + entries[FIELD] + offset_nbyte);
     };
@@ -468,7 +471,8 @@ struct Compressor {
     double eb_r = 1/eb, ebx2 = eb*2, ebx2_r = 1/ebx2;
 
     if (conf->splen != 0) {
-      fz::spv_scatter_naive<T, uint32_t>(d_spval, d_spidx, conf->splen, d_space, nullptr, stream);
+      float ms = 0;
+      fz::spv_scatter_naive<T, uint32_t>(d_spval, d_spidx, conf->splen, d_space, &ms, stream);
     }
 
     // std::cout << "Decompressing..." << std::endl;
@@ -588,6 +592,9 @@ struct Compressor {
     decompress(compressed_data_device, out_data, stream, orig_data_device);
 
     cudaFree(compressed_data_device);
+    if (orig_data_device != nullptr) {
+      cudaFree(orig_data_device);
+    }
     cudaFreeHost(compressed_data);
   }
 

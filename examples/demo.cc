@@ -13,7 +13,7 @@ uint8_t* compressed_data_host;
 float* decompressed_data_host;
 fz::Config* conf;
 
-void compress_demo(std::string fname, size_t x, size_t y, size_t z) {
+void compress_demo(std::string fname, size_t x, size_t y, size_t z, cudaStream_t stream) {
     
     // Setup config with compression options
     conf = new fz::Config(x, y, z);
@@ -27,10 +27,6 @@ void compress_demo(std::string fname, size_t x, size_t y, size_t z) {
     // conf->use_lorenzo_regular = false;
     conf->use_histogram_generic = true;
     conf->use_histogram_sparse = false;
-
-    // make the cudastream
-    cudaStream_t stream;
-    cudaStreamCreate(&stream);
 
     // create memory for the data
     float* input_data_device, * input_data_host;
@@ -71,18 +67,14 @@ void compress_demo(std::string fname, size_t x, size_t y, size_t z) {
     cudaFreeHost(input_data_host);
     cudaFree(input_data_device);
     cudaFree(internal_compressed);
-    cudaStreamDestroy(stream);
+    cudaStreamSynchronize(stream);
 
     // output is dumped to fname.fzmod and used in decompression
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-void decompress_demo_file(std::string fname) {
-
-    // make the cudastream
-    cudaStream_t stream;
-    cudaStreamCreate(&stream);
+void decompress_demo_file(std::string fname, cudaStream_t stream) {
 
     std::string compressed_fname = fname + ".stf_compressed";
     // std::string compressed_fname = fname + ".fzmod";
@@ -102,8 +94,10 @@ void decompress_demo_file(std::string fname) {
 
     decompressor.decompress(compressed_fname, decompressed, stream, original_data_host);
 
-    cudaStreamDestroy(stream);
+    // Free memory
     cudaFree(decompressed);
+    cudaFreeHost(original_data_host);
+    cudaStreamSynchronize(stream);
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -119,12 +113,16 @@ int main(int argc, char **argv) {
     size_t len2 = std::stoi(argv[3]);
     size_t len3 = std::stoi(argv[4]);
 
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+
     // COMPRESSION
-    compress_demo(fname, len1, len2, len3);
+    compress_demo(fname, len1, len2, len3, stream);
 
     // DECOMPRESSION
-    decompress_demo_file(fname);
+    decompress_demo_file(fname, stream);
 
+    cudaStreamDestroy(stream);
     cudaFreeHost(compressed_data_host);
     return 0;
 }

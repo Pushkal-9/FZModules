@@ -102,21 +102,6 @@ class HuffmanCodecSTF {
                  stf_internal_buffers& ibuffer, 
                  context& ctx, 
                  cudaStream_t stream) {
-    
-    //! Init reverse book and book4 with 0xff
-    ctx.task(
-      ibuffer.l_revbk4.write(), 
-      ibuffer.l_bk4.write())
-      .set_symbol("hf_bb_mem_init")->*[&]
-      (cudaStream_t s, 
-       auto rev_book, 
-       auto bk4) 
-    {
-      cuda_safe_call(
-        cudaMemsetAsync(rev_book.data_handle(), 0xff, revbk4_bytes, s));
-      cuda_safe_call(
-        cudaMemsetAsync(bk4.data_handle(), 0xff, sizeof(uint32_t) * rt_bklen, s));
-    };
 
     //! Build the Huffman codebook on CPU
     ctx.host_launch(
@@ -182,15 +167,21 @@ class HuffmanCodecSTF {
       }
 
       memcpy(bk4, space->output_bk(), bk_bytes);
+
       auto offset = 0;
+
       memcpy(rev_book.data_handle(), 
         space->first(), sizeof(int) * TYPE_BITS);
       offset += sizeof(int) * TYPE_BITS;
+
       memcpy(rev_book.data_handle() + offset, 
         space->entry(), sizeof(int) * TYPE_BITS);
       offset += sizeof(int) * TYPE_BITS;
+
       memcpy(rev_book.data_handle() + offset, 
         space->keys(), sizeof(uint16_t) * bklen);
+
+
       memcpy(l_bk4.data_handle(), bk4, bk_bytes);
 
       delete space;
@@ -215,17 +206,6 @@ class HuffmanCodecSTF {
     auto numSMs = num_SMs;
     auto blen = rt_bklen;
     auto t_sublen = sublen;
-
-    //! Set parentry to zero
-    ctx.task(
-      ibuffer.l_par_entry.write())
-      .set_symbol("hf_en_parentry_set")->*[pardeg]
-      (cudaStream_t s, 
-       auto par_entry)
-    {
-      cuda_safe_call(
-        cudaMemsetAsync(par_entry.data_handle(), 0, pardeg * sizeof(uint32_t), s));
-    };
 
     //! GPU coarse encode phase 1
     ctx.task(
@@ -347,17 +327,6 @@ class HuffmanCodecSTF {
     };
 
     cuda_safe_call(cudaStreamSynchronize(ctx.task_fence()));
-
-    //! Prepare the compressed buffer
-    ctx.task(
-      ibuffer.l_compressed.write())
-      .set_symbol("hf_en_comp_set")->*[data_len]
-      (cudaStream_t s, 
-       auto compressed) 
-    {
-      cuda_safe_call(
-        cudaMemsetAsync(compressed.data_handle(), 0, data_len*4/2, s));
-    };
 
     //! Copy the header to the compressed buffer
     ctx.task(

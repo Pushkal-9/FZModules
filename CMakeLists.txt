@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
 project(FZModules LANGUAGES CUDA CXX C VERSION 1.0)
 
 ########################
@@ -16,6 +16,7 @@ set(FZMOD_BACKEND "CUDA" CACHE STRING "Select the backend for the FZ Compression
 
 find_package(CUDAToolkit REQUIRED)
 enable_language(CUDA)
+set(CMAKE_CUDA_ARCHITECTURES native)
 
 #####################
 ### WSL DETECTION ###
@@ -87,22 +88,34 @@ endif()
 if(NOT USE_SANITIZER)
   set(USE_SANITIZER "" CACHE STRING "use a build sanitizer" FORCE)
 endif()
-set_property(CACHE USE_SANITIZER PROPERTY STRINGS "" "Address" "Thread" "Undefined" "Leak" "Memory")
+set_property(CACHE USE_SANITIZER PROPERTY STRINGS "" "Address" "Thread" "Undefined" "Leak" "Compute")
 if (USE_SANITIZER STREQUAL "Address")
+    message(STATUS "Compiling with Address Sanitizer")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
 elseif (USE_SANITIZER STREQUAL "Thread")
+    message(STATUS "Compiling with Thread Sanitizer")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
+    # check if ASAN_OPTIONS=protect_shadow_gap=0
+    if(DEFINED ENV{ASAN_OPTIONS})
+        set(ASAN_OPTIONS "$ENV{ASAN_OPTIONS}:protect_shadow_gap=0")
+    else()
+        set(ASAN_OPTIONS "protect_shadow_gap=0")
+    endif()
 elseif (USE_SANITIZER STREQUAL "Undefined")
+    message(STATUS "Compiling with Undefined Behavior Sanitizer")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
 elseif (USE_SANITIZER STREQUAL "Leak")
+    message(STATUS "Compiling with Leak Sanitizer")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak")
-elseif (USE_SANITIZER STREQUAL "Memory")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=memory")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=memory")
+elseif (USE_SANITIZER STREQUAL "Compute")
+    message(STATUS "Compiling with Compute Sanitizer")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -G -Xcompiler -rdynamic")
 endif()
 
 #########################
@@ -116,8 +129,14 @@ target_compile_options(
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--extended-lambda>
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--expt-relaxed-constexpr>
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Wno-deprecated-declarations>
-    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-lineinfo>
 )
+if(NOT USE_SANITIZER STREQUAL "Compute")
+  target_compile_options(
+    fzmod_compile_settings
+    INTERFACE
+      $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-lineinfo>
+  )
+endif()
 target_compile_features(fzmod_compile_settings INTERFACE cxx_std_17 cuda_std_17)
 target_link_libraries(fzmod_compile_settings INTERFACE CUDA::cudart)
 
@@ -368,3 +387,6 @@ install(DIRECTORY
   modules/predictor/spline/include/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fzmod
 )
+
+# Print Build Details
+include(cmake/probe.cmake)

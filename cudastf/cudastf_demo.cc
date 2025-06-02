@@ -101,14 +101,92 @@ void compress(std::string fname, size_t len1, size_t len2, size_t len3) {
   FZModPerformance perf;
   total_timer.start();
   
-  //! Initialize the hist buffer
+  //! Initialize the buffers
   ctx.task(
-    ibuffer.l_hist.write())
-    .set_symbol("hist_init")->*[data_len]
+    ibuffer.l_compressed.write(),
+    ibuffer.l_q_codes.write(),
+    ibuffer.l_top1.write(),
+    ibuffer.l_hist.write(),
+    ibuffer.l_out_vals.write(),
+    ibuffer.l_out_idxs.write(),
+    ibuffer.l_out_num.write(),
+    ibuffer.l_revbk4.write(),
+    ibuffer.l_bk4.write(),
+    ibuffer.codeword_hist.write(),
+    ibuffer.l_scratch.write(),
+    ibuffer.l_par_nbit.write(),
+    ibuffer.l_par_ncell.write(),
+    ibuffer.l_par_entry.write(),
+    ibuffer.l_bitstream.write(),
+    ibuffer.hf_header_entry.write(),
+    ibuffer.out_entries.write())
+    .set_symbol("init_memeory")->*[&]
     (cudaStream_t s, 
-     auto l_h) {
+     auto compressed, 
+     auto q_c, 
+     auto l_t1, 
+     auto l_h, 
+     auto o_v, 
+     auto o_i, 
+     auto o_n, 
+     auto rev_bk4, 
+     auto bk4,
+     auto codeword_hist,
+     auto l_scratch,
+     auto l_par_nbit,
+     auto l_par_ncell,
+     auto l_par_entry,
+     auto l_bitstream,
+     auto hf_header_entry,
+     auto out_entries) 
+  {
+    cuda_safe_call(
+      cudaMemsetAsync(compressed.data_handle(), 0, 
+        data_len * 4 / 2, s));
+    cuda_safe_call(
+      cudaMemsetAsync(q_c.data_handle(), 0, data_len * sizeof(uint16_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(l_t1.data_handle(), 0, sizeof(uint32_t), s));
     cuda_safe_call(
       cudaMemsetAsync(l_h.data_handle(), 0, 1024 * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(o_v.data_handle(), 0, 
+        (data_len / 5) * sizeof(float), s));
+    cuda_safe_call(
+      cudaMemsetAsync(o_i.data_handle(), 0, 
+        (data_len / 5) * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(o_n.data_handle(), 0, sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(rev_bk4.data_handle(), 0xff, 
+        codec_hf.revbk4_bytes, s));
+    cuda_safe_call(
+      cudaMemsetAsync(bk4.data_handle(), 0xff, 
+        codec_hf.max_bklen * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(codeword_hist.data_handle(), 0, 
+        1024 * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(l_scratch.data_handle(), 0, 
+        data_len * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(l_par_nbit.data_handle(), 0, 
+        pardeg * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(l_par_ncell.data_handle(), 0, 
+        pardeg * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(l_par_entry.data_handle(), 0, 
+        pardeg * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(l_bitstream.data_handle(), 0, 
+        (data_len / 2) * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(hf_header_entry.data_handle(), 0, 
+        6 * sizeof(uint32_t), s));
+    cuda_safe_call(
+      cudaMemsetAsync(out_entries.data_handle(), 0, 
+        (END + 1) * sizeof(uint32_t), s));
   };
 
   //! 1D Prototype Lorenzo Kernel

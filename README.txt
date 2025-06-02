@@ -1,6 +1,5 @@
 Place to create modules for the FZ project.
 
-
 cmake -S . -B build
 
 Options:
@@ -14,3 +13,6 @@ Options:
 example:
 
 cmake -S . -B stf_build/ -DBUILD_CUDASTF=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CUDA_ARCHITECTURES="86"
+cd stf_build/
+make -j
+make install
