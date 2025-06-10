@@ -190,12 +190,6 @@ struct Compressor {
       metrics->max = _max_val;
       metrics->min = _min_val;
       metrics->range = _range;
-
-      // std::cout << "Max: " << conf->logging_max << std::endl;
-      // std::cout << "Min: " << conf->logging_min << std::endl;
-      // std::cout << "Range: " << _range << std::endl;
-      // std::cout << "Relative eb: " << conf->eb << std::endl;
-      // std::cout << std::endl;
     }
 
     STOP_CPU_TIMER;
@@ -237,18 +231,8 @@ struct Compressor {
     }
 
     cudaStreamSynchronize((cudaStream_t)stream);
-    // make outlier seen on host
+    
     conf->splen = ibuffer->compact->num_outliers();
-
-    // print the first 100 quant codes
-    // auto q_codes_h = MAKE_UNIQUE_HOST(uint16_t, conf->len);
-    // cudaMemcpy(q_codes_h.get(), ibuffer->ectrl(), conf->len * sizeof(uint16_t), cudaMemcpyDeviceToHost);
-    // // printf("Quantization Codes:\n");
-    // for (int i = 0; i < conf->len; i++) {
-    //   // if (q_codes_h.get()[i] > 900 && q_codes_h.get()[i] != 0)
-    //   printf("%u ", q_codes_h.get()[i]);
-    // }
-    // printf("\n");
 
     STOP_CPU_TIMER;
     TIME_ELAPSED_CPU_TIMER(ms);
