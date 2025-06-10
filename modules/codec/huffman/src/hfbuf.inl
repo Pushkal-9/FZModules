@@ -67,6 +67,12 @@ struct HuffmanCodec<E>::Buf {
   GPU_unique_dptr<M[]> d_par_entry;
   GPU_unique_hptr<M[]> h_par_entry;
 
+  Buf(const Buf&) = delete;
+  Buf& operator=(const Buf&) = delete;
+
+  Buf(Buf&&) noexcept = delete;
+  Buf& operator=(Buf&&) noexcept = delete;
+
   // dense-sparse
   // memobj<H4>* dn_bitstream;
   // memobj<M>* dn_bitcount;
@@ -80,8 +86,7 @@ struct HuffmanCodec<E>::Buf {
 
  public:
   // auxiliary
-  void _debug(const std::string SYM_name, void* VAR, int SYM)
-  {
+  void _debug(const std::string SYM_name, void* VAR) {
     CUdeviceptr pbase0{0};
     size_t psize0{0};
 
@@ -90,7 +95,7 @@ struct HuffmanCodec<E>::Buf {
         "%s:\n"
         "\t(supposed) pointer : %p\n"
         "\t(queried)  pbase0  : %p\n"
-        "\t(queried)  psize0  : %'9lu\n",
+        "\t(queried)  psize0  : %9lu\n",  // Removed the apostrophe from %'9lu
         SYM_name.c_str(), (void*)VAR, (void*)&pbase0, psize0);
     pbase0 = 0, psize0 = 0;
   }
@@ -100,38 +105,40 @@ struct HuffmanCodec<E>::Buf {
     setlocale(LC_NUMERIC, "");
     printf("\nHuffmanCoarse<E, H4, M>::init() debugging:\n");
     printf("CUdeviceptr nbyte: %d\n", (int)sizeof(CUdeviceptr));
-    _debug("SCRATCH", d_scratch4.get(), RC::SCRATCH);
-    _debug("BITSTREAM", d_bitstream4.get(), RC::BITSTREAM);
-    _debug("PAR_NBIT", d_par_nbit.get(), RC::PAR_NBIT);
-    _debug("PAR_NCELL", d_par_ncell.get(), RC::PAR_NCELL);
+    _debug("SCRATCH", d_scratch4.get());
+    _debug("BITSTREAM", d_bitstream4.get());
+    _debug("PAR_NBIT", d_par_nbit.get());
+    _debug("PAR_NCELL", d_par_ncell.get());
     printf("\n");
   };
 
   // ctor
   Buf(size_t inlen, size_t _bklen, int _pardeg, bool _use_HFR = false, bool debug = false) :
-      len(inlen),
-      bitstream_max_len(inlen / 2),
-      pardeg(_pardeg),
-      sublen((inlen - 1) / _pardeg + 1),
-      bklen(_bklen),
-      use_HFR(_use_HFR),
-      revbk4_bytes(_revbk4_bytes(_bklen))
+    len(inlen),
+    pardeg(_pardeg),
+    sublen((inlen - 1) / _pardeg + 1),
+    bklen(_bklen),
+    use_HFR(_use_HFR),
+    revbk4_bytes(_revbk4_bytes(_bklen)),
+    bitstream_max_len(inlen / 2),
+    // Initialize smart pointers in declaration order
+    d_scratch4(MAKE_UNIQUE_DEVICE(H4, inlen)),
+    h_scratch4(MAKE_UNIQUE_HOST(H4, inlen)),
+    d_encoded(nullptr),
+    h_encoded(nullptr),
+    d_bitstream4(MAKE_UNIQUE_DEVICE(H4, inlen / 2)),
+    h_bitstream4(MAKE_UNIQUE_HOST(H4, inlen / 2)),
+    d_bk4(MAKE_UNIQUE_DEVICE(H4, _bklen)),
+    h_bk4(MAKE_UNIQUE_HOST(H4, _bklen)),
+    d_revbk4(MAKE_UNIQUE_DEVICE(PHF_BYTE, _revbk4_bytes(_bklen))),
+    h_revbk4(MAKE_UNIQUE_HOST(PHF_BYTE, _revbk4_bytes(_bklen))),
+    d_par_nbit(MAKE_UNIQUE_DEVICE(M, _pardeg)),
+    h_par_nbit(MAKE_UNIQUE_HOST(M, _pardeg)),
+    d_par_ncell(MAKE_UNIQUE_DEVICE(M, _pardeg)),
+    h_par_ncell(MAKE_UNIQUE_HOST(M, _pardeg)),
+    d_par_entry(MAKE_UNIQUE_DEVICE(M, _pardeg)),
+    h_par_entry(MAKE_UNIQUE_HOST(M, _pardeg))
   {
-    h_scratch4 = MAKE_UNIQUE_HOST(H4, len);
-    d_scratch4 = MAKE_UNIQUE_DEVICE(H4, len);
-    h_bk4 = MAKE_UNIQUE_HOST(H4, bklen);
-    d_bk4 = MAKE_UNIQUE_DEVICE(H4, bklen);
-    h_revbk4 = MAKE_UNIQUE_HOST(PHF_BYTE, revbk4_bytes);
-    d_revbk4 = MAKE_UNIQUE_DEVICE(PHF_BYTE, revbk4_bytes);
-    d_bitstream4 = MAKE_UNIQUE_DEVICE(H4, bitstream_max_len);
-    h_bitstream4 = MAKE_UNIQUE_HOST(H4, bitstream_max_len);
-    h_par_nbit = MAKE_UNIQUE_HOST(M, pardeg);
-    d_par_nbit = MAKE_UNIQUE_DEVICE(M, pardeg);
-    h_par_ncell = MAKE_UNIQUE_HOST(M, pardeg);
-    d_par_ncell = MAKE_UNIQUE_DEVICE(M, pardeg);
-    h_par_entry = MAKE_UNIQUE_HOST(M, pardeg);
-    d_par_entry = MAKE_UNIQUE_DEVICE(M, pardeg);
-
     // HFR: dense-sparse
     // if (use_HFR) {
     //   dn_bitstream = new memobj<H4>(len / 2, "hf::dn_bitstream", {Malloc});
@@ -173,22 +180,18 @@ struct HuffmanCodec<E>::Buf {
     auto memcpy_start = d_encoded;
     auto memcpy_adjust_to_start = 0;
 
-    memcpy_helper _revbk{d_revbk4.get(), revbk4_bytes, header.entry[PHFHEADER_REVBK]};
-    memcpy_helper _par_nbit{
-        d_par_nbit.get(), pardeg * sizeof(M), header.entry[PHFHEADER_PAR_NBIT]};
-    memcpy_helper _par_entry{
-        d_par_entry.get(), pardeg * sizeof(M), header.entry[PHFHEADER_PAR_ENTRY]};
-    memcpy_helper _bitstream{
-        d_bitstream4.get(), bitstream_max_len * sizeof(H4), header.entry[PHFHEADER_BITSTREAM]};
+    memcpy_helper _revbk{     d_revbk4.get(),     revbk4_bytes,                   header.entry[PHFHEADER_REVBK]};
+    memcpy_helper _par_nbit{  d_par_nbit.get(),   pardeg * sizeof(M),             header.entry[PHFHEADER_PAR_NBIT]};
+    memcpy_helper _par_entry{ d_par_entry.get(),  pardeg * sizeof(M),             header.entry[PHFHEADER_PAR_ENTRY]};
+    memcpy_helper _bitstream{ d_bitstream4.get(), bitstream_max_len * sizeof(H4), header.entry[PHFHEADER_BITSTREAM]};
 
     auto start = ((uint8_t*)memcpy_start + memcpy_adjust_to_start);
+    
     auto d2d_memcpy_merge = [&](memcpy_helper& var) {
-      CHECK_GPU(cudaMemcpyAsync(
-          start + var.dst, var.ptr, var.nbyte, cudaMemcpyDeviceToDevice, (cudaStream_t)stream));
+      CHECK_GPU(cudaMemcpyAsync(start + var.dst, var.ptr, var.nbyte, cudaMemcpyDeviceToDevice, (cudaStream_t)stream));
     };
 
-    CHECK_GPU(cudaMemcpyAsync(
-        start, &header, sizeof(header), cudaMemcpyHostToDevice, (cudaStream_t)stream));
+    CHECK_GPU(cudaMemcpyAsync(start, &header, sizeof(header), cudaMemcpyHostToDevice, (cudaStream_t)stream));
 
     // /* debug */ CHECK_GPU(cudaStreamSynchronize(stream));
     d2d_memcpy_merge(_revbk);

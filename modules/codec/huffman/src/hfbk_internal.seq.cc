@@ -22,7 +22,7 @@
 // internal data structure
 
 #define __PSZDBG__FATAL(CONST_CHAR) \
-  throw std::runtime_error("\e[31m[fzmod::fatal]\e[0m " + std::string(CONST_CHAR));
+  throw std::runtime_error("\033[31m[fzmod::fatal]\033[0m " + std::string(CONST_CHAR));
 
 #define NODE_STACK_TPL template <class NodeType, int Width>
 #define NODE_STACK phf_stack<NodeType, Width>

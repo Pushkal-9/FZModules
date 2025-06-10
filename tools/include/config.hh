@@ -12,14 +12,17 @@ namespace fz {
   class Config {
     public:
 
+      // #### FILE IO #### //
       bool toFile = true;
       std::string fname;
 
+      // #### REPORTING #### //
       bool report = true;
       bool compare = false;
       bool dump = false;
-      bool comp = true;
 
+      // #### PIPELINE #### //
+      bool comp = true;
       double eb = 1e-3;
       EB_TYPE eb_type = EB_ABS;
       ALGO algo = ALGO_LORENZO;
@@ -27,9 +30,7 @@ namespace fz {
       CODEC codec = CODEC_HUFFMAN;
       SECONDARY_CODEC secondary_codec = NONE;
 
-      // relative error bounds
-      double logging_max, logging_min;
-      
+      // #### DATA #### //
       uint32_t x;
       uint32_t y;
       uint32_t z;
@@ -39,20 +40,22 @@ namespace fz {
       size_t orig_size;
       size_t comp_size;
 
-      // histogram
+      double logging_max, logging_min;
+
+      // #### HISTOGRAM #### //
       uint16_t radius = 512;
       bool use_histogram_sparse = true;
       bool use_histogram_generic = false;
 
-      // huffman
+      // #### HUFFMAN #### //
       int sublen;
       int pardeg;
 
-      // lorenzo
+      // #### LORENZO #### //
       bool use_lorenzo_regular = true;
       bool use_lorenzo_zigzag = false;
 
-      //spline
+      // #### SPLINE #### //
       size_t const anchor512_len;
       constexpr static size_t BLK = 8;
 

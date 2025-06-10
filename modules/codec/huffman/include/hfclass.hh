@@ -43,7 +43,7 @@ class HuffmanCodec {
   size_t inlen() const;
 
   // TODO check d_hist_ext boundary
-  HuffmanCodec* buildbook(uint32_t* d_hist_ext, uint16_t const rt_bklen, phf_stream_t);
+  HuffmanCodec* buildbook(const uint32_t* d_hist_ext, uint16_t const rt_bklen, phf_stream_t);
   // TODO inlen is unnecessary
   // alternatively, it can force check the input array
   HuffmanCodec* encode(E*, size_t const, PHF_BYTE**, size_t*, phf_stream_t);
