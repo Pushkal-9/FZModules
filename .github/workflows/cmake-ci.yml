@@ -15,7 +15,7 @@ jobs:
 
     container:
       image: nvidia/cuda:12.3.1-devel-ubuntu22.04
-      options: --gpus=all  # only meaningful on a runner with GPU support
+      # Remove: options: --gpus=all
 
     steps:
     - name: Install dependencies
