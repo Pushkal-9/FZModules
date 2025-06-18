@@ -26,7 +26,7 @@ void phf_CPU_build_codebook_v2(uint32_t* freq, size_t const bklen, H* book)
 
   std::priority_queue<phf_node*, container, phf_cmp_node> pq;
 
-  for (auto i = 0; i < bklen; i++) {
+  for (size_t i = 0; i < bklen; i++) {
     auto f = freq[i];
     if (f != 0) pq.push(new phf_node(i, f));
   }

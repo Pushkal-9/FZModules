@@ -64,8 +64,7 @@ __global__ void KERNEL_CUHIP_p2013Histogram(T* in_data, size_t const data_len,
   const unsigned int lane = tix % WARP_SIZE;
   const unsigned int warps_block = bdx / WARP_SIZE;
   const unsigned int off_rep = (bins_len + 1) * (tix % repeat);
-  const unsigned int begin =
-      (data_len / warps_block) * warp_id + WARP_SIZE * blockIdx.x + lane;
+  const unsigned int begin = (data_len / warps_block) * warp_id + WARP_SIZE * blockIdx.x + lane;
   unsigned int end = (data_len / warps_block) * (warp_id + 1);
   const unsigned int step = WARP_SIZE * gridDim.x;
 

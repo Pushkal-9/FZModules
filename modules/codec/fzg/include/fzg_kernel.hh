@@ -53,6 +53,12 @@ class Buf {
   Buf(size_t const data_len, bool alloc_test_buf);
   ~Buf();
 
+  Buf(const Buf&) = delete;
+  Buf& operator=(const Buf&) = delete;
+
+  Buf(Buf&&) noexcept = delete;
+  Buf& operator=(Buf&&) noexcept = delete;
+
   void clear_buffer();
 
   void memcpy_merge(Header& header, void* stream);

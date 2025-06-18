@@ -1,6 +1,6 @@
 .notes/
-build/
+*build/
 .vscode/
-old/
-testing/
 data/
+settings.json
+temp/

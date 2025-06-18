@@ -113,9 +113,12 @@ __global__ void KERNEL_CUHIP_c_lorenzo_1d1l(
     }
 
     if (not quantizable) {
-      auto cur_idx = atomicAdd(out_cn, 1);
-      out_cidx[cur_idx] = id_base + threadIdx.x * Seq + ix;
-      out_cval[cur_idx] = candidate;
+      auto global_idx = id_base + threadIdx.x * Seq + ix;
+      if (global_idx < data_len3.x) {  // Add this check
+        auto cur_idx = atomicAdd(out_cn, 1);
+        out_cidx[cur_idx] = global_idx;
+        out_cval[cur_idx] = candidate;
+      }
     }
   }
   __syncthreads();

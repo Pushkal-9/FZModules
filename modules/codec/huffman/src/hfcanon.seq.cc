@@ -52,9 +52,9 @@ int canonize(uint8_t* bin, uint32_t const bklen)
     }
   }
 
-  for (int i = 1; i < TYPE_BITS; i++) entry[i] = numl[i - 1];
-  for (int i = 1; i < TYPE_BITS; i++) entry[i] += entry[i - 1];
-  for (auto i = 0; i < TYPE_BITS; i++) iterby[i] = entry[i];
+  for (unsigned long i = 1; i < TYPE_BITS; i++) entry[i] = numl[i - 1];
+  for (unsigned long i = 1; i < TYPE_BITS; i++) entry[i] += entry[i - 1];
+  for (unsigned long i = 0; i < TYPE_BITS; i++) iterby[i] = entry[i];
 
   //////// first code
 
@@ -67,11 +67,11 @@ int canonize(uint8_t* bin, uint32_t const bklen)
   // /* debug */ for (auto l = 1; l <= max_l; l++)
   //   printf("l: %3d\tnuml: %3d\tfirst: %3d\n", l, numl[l], first[l]);
 
-  for (auto i = 0; i < bklen; i++) canon[i] = FILL;
-  for (auto i = 0; i < bklen; i++) output_bk[i] = FILL;
+  for (uint32_t i = 0; i < bklen; i++) canon[i] = FILL;
+  for (uint32_t i = 0; i < bklen; i++) output_bk[i] = FILL;
 
   // Reverse Codebook Generation
-  for (auto i = 0; i < bklen; i++) {
+  for (uint32_t i = 0; i < bklen; i++) {
     auto c = input_bk[i];
     uint8_t l = reinterpret_cast<PW*>(&c)->bitcount;
 
@@ -84,7 +84,7 @@ int canonize(uint8_t* bin, uint32_t const bklen)
     }
   }
 
-  for (auto i = 0; i < bklen; i++)
+  for (uint32_t i = 0; i < bklen; i++)
     if (canon[i] != FILL) output_bk[keys[i]] = canon[i];
 
   return 0;
@@ -124,9 +124,9 @@ int hf_canon_reference<E, H>::canonize()
     }
   }
 
-  for (int i = 1; i < Space::TYPE_BITS; i++) entry(i) = numl(i - 1);
-  for (int i = 1; i < Space::TYPE_BITS; i++) entry(i) += entry(i - 1);
-  for (auto i = 0; i < Space::TYPE_BITS; i++) iterby(i) = entry(i);
+  for (unsigned long i = 1; i < Space::TYPE_BITS; i++) entry(i) = numl(i - 1);
+  for (unsigned long i = 1; i < Space::TYPE_BITS; i++) entry(i) += entry(i - 1);
+  for (unsigned long i = 0; i < Space::TYPE_BITS; i++) iterby(i) = entry(i);
 
   //////// first code
 
