@@ -16,8 +16,8 @@ void phf_CPU_build_canonized_codebook_v1(
     uint32_t* freq, int const bklen, H* book, uint8_t* revbook, int const revbook_bytes,
     float* milliseconds)
 {
-  using PW4 = HuffmanWord<4>;
-  using PW8 = HuffmanWord<8>;
+  // using PW4 = HuffmanWord<4>;
+  // using PW8 = HuffmanWord<8>;
 
   constexpr auto TYPE_BITS = sizeof(H) * 8;
   auto bk_bytes = sizeof(H) * bklen;
@@ -39,15 +39,6 @@ void phf_CPU_build_canonized_codebook_v1(
     auto z = hires::now();
     if (milliseconds) *milliseconds += static_cast<duration_t>(z - a).count() * 1000;
   }
-
-  // print
-  // for (auto i = 0; i < bklen; i++) {
-  //   auto pw4 = reinterpret_cast<PW4*>(book + i);
-  //   cout << "old-" << i << "\t";
-  //   cout << bitset<PW4::FIELD_BITCOUNT>(pw4->bitcount) << "\t";
-  //   cout << pw4->bitcount << "\t";
-  //   cout << bitset<PW4::FIELD_CODE>(pw4->prefix_code) << "\n";
-  // }
 
   space->input_bk() = book;  // external
 
@@ -82,7 +73,7 @@ void phf_CPU_build_canonized_codebook_v1(
 
 template <typename E, typename H>
 void phf_CPU_build_canonized_codebook_v2(
-    uint32_t* freq, int const bklen, uint32_t* bk4, uint8_t* revbook, int const revbook_bytes,
+    uint32_t* freq, int const bklen, uint32_t* bk4, uint8_t* revbook,
     float* milliseconds)
 {
   using PW4 = HuffmanWord<4>;
@@ -90,8 +81,8 @@ void phf_CPU_build_canonized_codebook_v2(
 
   constexpr auto TYPE_BITS = sizeof(H) * 8;
   auto bk_bytes = sizeof(H) * bklen;
-  auto space_bytes = hf_space<E, H>::space_bytes(bklen);
-  auto revbook_ofst = hf_space<E, H>::revbook_offset(bklen);
+  // auto space_bytes = hf_space<E, H>::space_bytes(bklen);
+  // auto revbook_ofst = hf_space<E, H>::revbook_offset(bklen);
   auto space = new hf_canon_reference<E, H>(bklen);
   if (milliseconds) *milliseconds = 0;
 
@@ -170,9 +161,9 @@ void phf_CPU_build_canonized_codebook_v2(
   delete space;
 }
 
-#define INSTANTIATE_PHF_CPU_BUILD_CANONICAL(E, H)                                           \
-  template void phf_CPU_build_canonized_codebook_v2<E, H>(                                  \
-      uint32_t * freq, int const bklen, H* book, uint8_t* revbook, int const revbook_bytes, \
+#define INSTANTIATE_PHF_CPU_BUILD_CANONICAL(E, H)                  \
+  template void phf_CPU_build_canonized_codebook_v2<E, H>(         \
+      uint32_t * freq, int const bklen, H* book, uint8_t* revbook, \
       float* milliseconds);
 
 INSTANTIATE_PHF_CPU_BUILD_CANONICAL(uint8_t, uint32_t)

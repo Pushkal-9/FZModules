@@ -70,7 +70,11 @@ phf_codec* capi_phf_create(size_t const inlen, phf_dtype const t, int const bkle
       return nullptr;
   };
 
-  return new phf_codec{.codec = ret_codec(), .header = new phf_header, .data_type = t};
+  phf_codec* codec = new phf_codec;
+  codec->codec = ret_codec();
+  codec->header = new phf_header;
+  codec->data_type = t;
+  return codec;
 }
 
 phferr capi_phf_release(phf_codec* c)

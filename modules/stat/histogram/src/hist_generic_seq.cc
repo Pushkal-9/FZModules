@@ -15,10 +15,10 @@
 namespace fz::module {
 
 template <typename E>
-int SEQ_histogram_generic(E* in, size_t const inlen, uint32_t* out_hist,
-                          uint16_t const outlen, float* milliseconds) {
+int SEQ_histogram_generic(E* in, size_t const inlen, 
+                          uint32_t* out_hist, float* milliseconds) {
   auto t1 = hires::now();
-  for (auto i = 0; i < inlen; i++) {
+  for (size_t i = 0; i < inlen; i++) {
     auto n = in[i];
     out_hist[(int)n] += 1;
   }
@@ -32,8 +32,7 @@ int SEQ_histogram_generic(E* in, size_t const inlen, uint32_t* out_hist,
 
 #define INIT_HIST_SEQ(E)                                                    \
   template int fz::module::SEQ_histogram_generic(                          \
-      E* in, size_t const inlen, uint32_t* out_hist, uint16_t const outlen, \
-      float* milliseconds);
+      E* in, size_t const inlen, uint32_t* out_hist, float* milliseconds);
 
 INIT_HIST_SEQ(uint8_t);
 INIT_HIST_SEQ(uint16_t);

@@ -47,8 +47,8 @@ namespace fz::module {
 
     auto start = hires::now();
     {
-      for (auto i = 0; i < inlen; i++) {
-        auto n = in[i];
+      for (size_t i = 0; i < inlen; i++) {
+        int n = in[i];
         if (n == radius)
           continue;
         else if (n == radius - 1)

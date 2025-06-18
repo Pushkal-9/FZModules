@@ -7,7 +7,7 @@
 // dense array, 1d
 template <typename T>
 struct array1 {
-  T* const buf;
+  T* buf;
   size_t len;
 };
 

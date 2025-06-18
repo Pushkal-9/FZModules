@@ -18,14 +18,20 @@ struct fz::FzgCodec::impl {
   float time_codec() const { return _time_lossless; }
 
   impl(size_t const data_len)
-  {
-    len = data_len;
-    config = fzgpu::configure_fzgpu(data_len);  // TODO duplicate with Buf::config
-
-    buf = new fzgpu::Buf(data_len, false);
-  }
+    : header(),  // Match the declaration order
+    config(fzgpu::configure_fzgpu(data_len)),
+    buf(new fzgpu::Buf(data_len, false)),
+    len(data_len),  // Moved to match declaration order
+    _time_lossless(0.0)
+  {}
 
   ~impl() { delete buf; }
+
+  impl(const impl&) = delete;
+  impl& operator=(const impl&) = delete;
+
+  impl(impl&&) noexcept = delete;
+  impl& operator=(impl&&) noexcept = delete;
 
   void make_metadata()
   {
@@ -63,7 +69,7 @@ struct fz::FzgCodec::impl {
   }
 
   void decode(
-      uint8_t* in_archive, size_t const archive_len, E* out_data, size_t const data_len,
+      uint8_t* in_archive, E* out_data, size_t const data_len,
       void* stream)
   {
     Header header;
@@ -93,9 +99,9 @@ fz::FzgCodec* fz::FzgCodec::encode(
 }
 
 fz::FzgCodec* fz::FzgCodec::decode(
-    uint8_t* in_comp, size_t const comp_len, E* out_data, size_t const data_len, void* stream)
+    uint8_t* in_comp, E* out_data, size_t const data_len, void* stream)
 {
-  pimpl->decode(in_comp, comp_len, out_data, data_len, (cudaStream_t)stream);
+  pimpl->decode(in_comp, out_data, data_len, (cudaStream_t)stream);
   return this;
 }
 

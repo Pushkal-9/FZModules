@@ -8,13 +8,16 @@ namespace _portable::utils {
 
 struct exception_gpu_general : public std::exception {
   exception_gpu_general(cudaError_t gpu_error_status, const char* _file_,
-                        const int _line_) {
-    const char* err = cudaGetErrorString(gpu_error_status);
-    std::stringstream ss;
-    ss << "GPU API failed at \e[31m\e[1m" << _file_ << ':' << _line_;
-    ss << "\e[0m with error: " << err << '(' << (int)gpu_error_status << ')';
-    err_msg = ss.str();
-  }
+                        const int _line_)
+      : err_msg([gpu_error_status, _file_, _line_]() {
+          const char* err = cudaGetErrorString(gpu_error_status);
+          std::stringstream ss;
+          // Use standard escape sequences or Unicode
+          ss << "GPU API failed at \033[31m\033[1m" << _file_ << ':' << _line_;
+          ss << "\033[0m with error: " << err << '(' << (int)gpu_error_status << ')';
+          return ss.str();
+        }()) {}
+  
   const char* what() const noexcept { return err_msg.c_str(); }
   std::string err_msg;
 };

@@ -67,12 +67,39 @@ struct HuffmanCodec<E>::impl {
 
   Buf* buf;
 
-  impl() = default;
+  impl() 
+    : header(),  // Initialize header
+      // Initialize the timepoints
+      f(),
+      e(),
+      d(),
+      c(),
+      b(),
+      a(),
+      _time_book(0.0f), 
+      _time_lossless(0.0f),
+      event_start(nullptr),  // Initialize CUDA event pointers
+      event_end(nullptr),
+      pardeg(0),
+      sublen(0),
+      numSMs(0),
+      len(0),
+      rt_bklen(0),
+      h_hist(nullptr),  // Initialize unique pointers
+      buf(nullptr)
+  {}
+
   ~impl()
   {
     delete buf;
     event_destroy_pair(event_start, event_end);
   }
+
+  impl(const impl&) = delete;
+  impl& operator=(const impl&) = delete;
+
+  impl(impl&&) noexcept = delete;
+  impl& operator=(impl&&) noexcept = delete;
 
   // keep ctor short
   void init(size_t const inlen, int const _pardeg, bool debug)
@@ -101,14 +128,16 @@ struct HuffmanCodec<E>::impl {
 #else
 
   // build Huffman tree on CPU
-  void buildbook(uint32_t* freq, uint16_t const _rt_bklen, phf_stream_t stream)
+  void buildbook(const uint32_t* freq, uint16_t const _rt_bklen, phf_stream_t stream)
   {
     rt_bklen = _rt_bklen;
     // memcpy_allkinds<D2H>(h_hist.get(), freq, bklen);
     cudaMemcpy(h_hist.get(), freq, rt_bklen * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 
+
+
     phf_CPU_build_canonized_codebook_v2<E, H4>(
-        h_hist.get(), rt_bklen, buf->h_bk4.get(), buf->h_revbk4.get(), buf->revbk4_bytes,
+        h_hist.get(), rt_bklen, buf->h_bk4.get(), buf->h_revbk4.get(),
         &_time_book);
 
     // memcpy_allkinds_async<H2D>(buf->d_bk4.get(), buf->h_bk4.get(), rt_bklen, (cudaStream_t)stream);
@@ -117,6 +146,8 @@ struct HuffmanCodec<E>::impl {
     cudaMemcpyAsync(buf->d_bk4.get(), buf->h_bk4.get(), rt_bklen * sizeof(H4), cudaMemcpyHostToDevice, (cudaStream_t)stream);
 
     cudaMemcpyAsync(buf->d_revbk4.get(), buf->h_revbk4.get(), buf->revbk4_bytes, cudaMemcpyHostToDevice, (cudaStream_t)stream);
+
+    cudaStreamSynchronize((cudaStream_t)stream);
   }
 #endif
 
@@ -155,6 +186,13 @@ struct HuffmanCodec<E>::impl {
 
     cudaStreamSynchronize((cudaStream_t) stream);
 
+    // move rebk4 (first 10 entries) to host and print
+    // uint32_t revbk4[10];
+    // cudaMemcpyAsync(revbk4, buf->d_revbk4.get(), 10 * sizeof(uint32_t), cudaMemcpyDeviceToHost, (cudaStream_t)stream);
+    // cudaStreamSynchronize((cudaStream_t) stream);
+    // printf("revbk4: [0]=%u [1]=%u [2]=%u [3]=%u [4]=%u [5]=%u\n",
+    //        revbk4[0], revbk4[1], revbk4[2], revbk4[3], revbk4[4], revbk4[5]);
+
     make_metadata();
     buf->memcpy_merge(header, stream);  // TODO externalize/make explicit
 
@@ -170,6 +208,9 @@ struct HuffmanCodec<E>::impl {
     *out = buf->d_encoded;
     *outlen = phf_encoded_bytes(&header);
   }
+
+
+
 
   void decode(uint8_t* in_encoded, E* out_decoded, phf_stream_t stream, bool header_on_device)
   {
@@ -193,6 +234,9 @@ struct HuffmanCodec<E>::impl {
 #undef PHF_ACCESSOR
   }
 
+
+  
+
   void make_metadata()
   {
     // header.self_bytes = sizeof(Header);
@@ -212,6 +256,11 @@ struct HuffmanCodec<E>::impl {
     // *.END + 1: need to know the ending position
     for (auto i = 1; i < PHFHEADER_END + 1; i++) header.entry[i] = nbyte[i - 1];
     for (auto i = 1; i < PHFHEADER_END + 1; i++) header.entry[i] += header.entry[i - 1];
+
+    // print header entries
+    printf("HF CODEC - Header entries: [0]=%u [1]=%u [2]=%u [3]=%u [4]=%u [5]=%u\n",
+           header.entry[0], header.entry[1], header.entry[2], header.entry[3],
+           header.entry[4], header.entry[5]);
   }
 
   void clear_buffer() { buf->clear_buffer(); }
@@ -232,7 +281,7 @@ PHF_TPL PHF_CLASS::HuffmanCodec(size_t const inlen, int const pardeg, bool debug
 PHF_TPL PHF_CLASS::~HuffmanCodec(){};
 
 // using CPU huffman
-PHF_TPL PHF_CLASS* PHF_CLASS::buildbook(uint32_t* freq, uint16_t const rt_bklen, phf_stream_t stream)
+PHF_TPL PHF_CLASS* PHF_CLASS::buildbook(const uint32_t* freq, uint16_t const rt_bklen, phf_stream_t stream)
 {
   pimpl->buildbook(freq, rt_bklen, stream);
   return this;
