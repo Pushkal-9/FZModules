@@ -1,4 +1,4 @@
-name: CMake CI with GoogleTest (CUDA via Docker)
+name: CMake CI with GoogleTest (CUDA + CMake 3.27)
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 
 env:
   BUILD_TYPE: Release
+  CMAKE_VERSION: 3.27.9
 
 jobs:
   build:
@@ -15,13 +16,19 @@ jobs:
 
     container:
       image: nvidia/cuda:12.3.1-devel-ubuntu22.04
-      # Remove: options: --gpus=all
 
     steps:
     - name: Install dependencies
       run: |
         apt-get update
-        apt-get install -y cmake ninja-build g++ git
+        apt-get install -y git g++ ninja-build curl
+
+    - name: Install CMake ${{ env.CMAKE_VERSION }}
+      run: |
+        curl -LO https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.sh
+        chmod +x cmake-${CMAKE_VERSION}-linux-x86_64.sh
+        ./cmake-${CMAKE_VERSION}-linux-x86_64.sh --skip-license --prefix=/usr/local
+        cmake --version
 
     - name: Checkout code
       uses: actions/checkout@v4
